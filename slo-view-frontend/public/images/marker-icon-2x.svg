@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 50 82" width="50" height="82">
+  <!-- Marker shadow -->
+  <ellipse cx="25" cy="76" rx="16" ry="6" fill="#000000" opacity="0.3"/>
+  
+  <!-- Marker body -->
+  <path d="M25 0C11.2 0 0 11.2 0 25c0 25 25 57 25 57s25-32 25-57C50 11.2 38.8 0 25 0z" fill="#ef4444"/>
+  
+  <!-- Marker border -->
+  <path d="M25 0C11.2 0 0 11.2 0 25c0 25 25 57 25 57s25-32 25-57C50 11.2 38.8 0 25 0z" fill="none" stroke="#ffffff" stroke-width="4"/>
+  
+  <!-- Inner circle -->
+  <circle cx="25" cy="25" r="12" fill="#ffffff"/>
+  <circle cx="25" cy="25" r="6" fill="#ef4444"/>
+</svg>

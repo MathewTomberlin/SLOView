@@ -1,9 +1,10 @@
 # SLO View - Git Ignore File
 
 # Google Cloud Service Account Keys
-*.json
+*-key.json
 !package.json
 !tsconfig.json
+!manifest.json
 
 # Environment variables
 .env
@@ -71,7 +72,7 @@ dist
 
 # Gatsby files
 .cache/
-public
+# Note: public/ folder is needed for React app assets
 
 # Storybook build outputs
 .out
