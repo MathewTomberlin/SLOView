@@ -6,7 +6,7 @@ setlocal enabledelayedexpansion
 
 REM Configuration variables
 set PROJECT_ID=slo-view-app
-set REGION=us-central1
+set REGION=us-west1
 set BUCKET_NAME=slo-view-frontend
 set BACKEND_SERVICE_NAME=slo-view-backend
 

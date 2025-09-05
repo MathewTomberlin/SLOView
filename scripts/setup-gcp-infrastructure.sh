@@ -8,7 +8,7 @@ set -e  # Exit on any error
 # Configuration variables
 PROJECT_ID="slo-view-app"
 PROJECT_NAME="SLO View Application"
-REGION="us-central1"
+REGION="us-west1"
 SERVICE_ACCOUNT_NAME="slo-view-cicd"
 BUCKET_NAME="slo-view-frontend"
 BACKEND_SERVICE_NAME="slo-view-backend"

@@ -45,6 +45,6 @@ Before running these scripts, ensure you have:
 
 ## Notes
 
-- These scripts automate the manual setup process described in [SETUP_INSTRUCTIONS.md](../SETUP_INSTRUCTIONS.md)
+- These scripts automate the manual setup process described in [DEPLOYMENT.md](../DEPLOYMENT.md)
 - For detailed manual setup instructions, refer to the main documentation
 - Scripts include error checking and will stop execution if prerequisites are not met

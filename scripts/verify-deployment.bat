@@ -5,7 +5,7 @@ REM This script verifies that both frontend and backend are deployed correctly
 setlocal enabledelayedexpansion
 
 set PROJECT_ID=slo-view-app
-set REGION=us-central1
+set REGION=us-west1
 set BUCKET_NAME=slo-view-frontend
 set BACKEND_SERVICE_NAME=slo-view-backend
 

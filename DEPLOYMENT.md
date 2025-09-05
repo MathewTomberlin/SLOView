@@ -144,7 +144,7 @@ chmod +x scripts/setup-gcp-infrastructure.sh
    gcloud run deploy slo-view-backend \
        --image gcr.io/slo-view-app/slo-view-backend \
        --platform managed \
-       --region us-central1 \
+       --region us-west1 \
        --allow-unauthenticated \
        --port 8080 \
        --memory 512Mi \
@@ -223,7 +223,7 @@ chmod +x scripts/setup-gcp-infrastructure.sh
 # Test backend health
 SERVICE_URL=$(gcloud run services describe slo-view-backend \
     --platform managed \
-    --region us-central1 \
+    --region us-west1 \
     --format 'value(status.url)')
 curl $SERVICE_URL/health
 
