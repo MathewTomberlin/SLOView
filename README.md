@@ -59,32 +59,27 @@ This project contains two separate applications:
 
 **Windows:**
 ```cmd
-setup-gcp-infrastructure.bat
-deploy-applications.bat
+scripts\setup-gcp-infrastructure.bat
+scripts\deploy-applications.bat
 ```
 
 **Linux/Mac:**
 ```bash
-chmod +x setup-gcp-infrastructure.sh
-./setup-gcp-infrastructure.sh
+chmod +x scripts/setup-gcp-infrastructure.sh
+./scripts/setup-gcp-infrastructure.sh
 ```
 
 ### Manual Setup
-See [SETUP_INSTRUCTIONS.md](SETUP_INSTRUCTIONS.md) for detailed step-by-step instructions.
+See [DEPLOYMENT.md](DEPLOYMENT.md) for detailed step-by-step instructions.
 
 ## 📚 Documentation
 
 ### Architecture & Planning
-- [Architecture Design](architecture.md) - High-level system architecture
-- [Technical Specifications](technical-specs.md) - Detailed technical requirements
-- [Final Architecture Summary](FINAL_ARCHITECTURE_SUMMARY.md) - Complete architecture decisions
-- [Map Implementation Options](map-implementation-options.md) - Mapping technology analysis
+- [System Architecture](architecture.md) - Complete system architecture and technical specifications
 
 ### Development & Deployment
 - [GitHub Workflow](github-workflow.md) - Development process and collaboration
-- [Deployment Strategy](deployment-strategy.md) - Google Cloud deployment processes
-- [Setup Instructions](SETUP_INSTRUCTIONS.md) - Complete setup guide
-- [Deployment Guide](DEPLOYMENT_GUIDE.md) - Detailed deployment documentation
+- [Deployment Guide](DEPLOYMENT.md) - Complete setup and deployment documentation
 
 ### Application Documentation
 - [Frontend README](slo-view-frontend/README.md) - React TypeScript application details
@@ -177,7 +172,7 @@ cd slo-view-frontend && npm test
 cd slo-view-backend && mvn test
 
 # Verify deployment
-verify-deployment.bat  # Windows
+scripts\verify-deployment.bat  # Windows
 ```
 
 ## 📊 Features
@@ -220,8 +215,8 @@ This project is part of the SLO View application suite. All rights reserved.
 ## 🆘 Support
 
 For issues or questions:
-1. Check the troubleshooting section in [SETUP_INSTRUCTIONS.md](SETUP_INSTRUCTIONS.md)
-2. Review the [Deployment Guide](DEPLOYMENT_GUIDE.md)
+1. Check the troubleshooting section in [DEPLOYMENT.md](DEPLOYMENT.md)
+2. Review the [GitHub Workflow](github-workflow.md) for development processes
 3. Check GitHub Issues for known problems
 4. Contact the development team
 

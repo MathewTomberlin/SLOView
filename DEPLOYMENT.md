@@ -1,70 +1,57 @@
-# SLO View - Setup Instructions
+# SLO View - Complete Deployment Guide
 
-This document provides step-by-step instructions for setting up the complete SLO View application infrastructure and deployment.
+This comprehensive guide covers everything needed to deploy the SLO View application to Google Cloud Platform, from initial setup to production deployment.
+
+## Table of Contents
+- [Prerequisites](#prerequisites)
+- [Quick Setup (Automated)](#quick-setup-automated)
+- [Manual Setup](#manual-setup)
+- [Deployment Strategy](#deployment-strategy)
+- [Monitoring & Maintenance](#monitoring--maintenance)
+- [Troubleshooting](#troubleshooting)
 
 ## Prerequisites
 
 ### Required Software
-1. **Node.js** (v18 or higher)
-   - Download from: https://nodejs.org/
-   - Verify installation: `node --version`
-
-2. **Java Development Kit** (JDK 11 or higher)
-   - Download from: https://adoptium.net/
-   - Verify installation: `java -version`
-
-3. **Maven** (v3.6 or higher)
-   - Download from: https://maven.apache.org/download.cgi
-   - Verify installation: `mvn --version`
-
-4. **Docker Desktop**
-   - Download from: https://www.docker.com/products/docker-desktop
-   - Verify installation: `docker --version`
-
-5. **Google Cloud SDK**
-   - Download from: https://cloud.google.com/sdk/docs/install
-   - Verify installation: `gcloud --version`
-
-6. **Git**
-   - Download from: https://git-scm.com/
-   - Verify installation: `git --version`
+1. **Node.js** (v18 or higher) - [Download](https://nodejs.org/)
+2. **Java Development Kit** (JDK 11 or higher) - [Download](https://adoptium.net/)
+3. **Maven** (v3.6 or higher) - [Download](https://maven.apache.org/download.cgi)
+4. **Docker Desktop** - [Download](https://www.docker.com/products/docker-desktop)
+5. **Google Cloud SDK** - [Download](https://cloud.google.com/sdk/docs/install)
+6. **Git** - [Download](https://git-scm.com/)
 
 ### Required Accounts
-1. **Google Cloud Platform Account**
-   - Sign up at: https://cloud.google.com/
-   - Enable billing for your account
+1. **Google Cloud Platform Account** - [Sign up](https://cloud.google.com/) (enable billing)
+2. **GitHub Account** - [Sign up](https://github.com/)
 
-2. **GitHub Account**
-   - Sign up at: https://github.com/
+### Required APIs
+- Google Cloud Run API
+- Google Cloud Storage API
+- Google Container Registry API
+- Google Cloud Build API
 
 ## Quick Setup (Automated)
 
-### Option 1: Windows Users
-1. Open Command Prompt or PowerShell as Administrator
-2. Navigate to the project directory
-3. Run the setup script:
-   ```cmd
-   setup-gcp-infrastructure.bat
-   ```
-4. Follow the prompts and wait for completion
-5. Deploy applications:
-   ```cmd
-   deploy-applications.bat
-   ```
+### Windows Users
+```cmd
+# Set up Google Cloud infrastructure
+scripts\setup-gcp-infrastructure.bat
 
-### Option 2: Linux/Mac Users
-1. Open Terminal
-2. Navigate to the project directory
-3. Make the script executable:
-   ```bash
-   chmod +x setup-gcp-infrastructure.sh
-   ```
-4. Run the setup script:
-   ```bash
-   ./setup-gcp-infrastructure.sh
-   ```
+# Deploy applications
+scripts\deploy-applications.bat
 
-## Manual Setup (Step-by-Step)
+# Verify deployment
+scripts\verify-deployment.bat
+```
+
+### Linux/Mac Users
+```bash
+# Make script executable and run setup
+chmod +x scripts/setup-gcp-infrastructure.sh
+./scripts/setup-gcp-infrastructure.sh
+```
+
+## Manual Setup
 
 ### Step 1: Google Cloud Project Setup
 
@@ -189,9 +176,7 @@ This document provides step-by-step instructions for setting up the complete SLO
 
 ### Step 6: GitHub Repository Setup
 
-1. **Create a new GitHub repository** (if not already done)
-
-2. **Add repository secrets:**
+1. **Add repository secrets:**
    - Go to your repository settings
    - Navigate to "Secrets and variables" → "Actions"
    - Add the following secrets:
@@ -199,48 +184,83 @@ This document provides step-by-step instructions for setting up the complete SLO
      - `GCP_SA_KEY`: (contents of `slo-view-cicd-key.json`)
      - `GCP_BUCKET_NAME`: `slo-view-frontend`
 
-3. **Push your code to GitHub:**
+2. **Push your code to GitHub:**
    ```bash
    git add .
    git commit -m "Initial commit with complete SLO View application"
    git push origin main
    ```
 
-## Verification
+## Deployment Strategy
 
-### Test Backend
+### Architecture Overview
+- **Frontend**: React app hosted in Google Cloud Storage (static website)
+- **Backend**: Spring Boot API hosted in Google Cloud Run (serverless containers)
+- **CI/CD**: GitHub Actions for automated testing and deployment
+
+### Frontend Deployment (Google Cloud Storage)
+- Static website hosting with automatic HTTPS
+- CDN-ready for global performance
+- Versioning enabled for rollback capabilities
+- Public access for web serving
+
+### Backend Deployment (Google Cloud Run)
+- Containerized Spring Boot application
+- Auto-scaling based on traffic
+- Serverless with pay-per-use pricing
+- Health checks and monitoring built-in
+
+### CI/CD Pipeline
+- **Frontend**: Automated build and deployment to Cloud Storage
+- **Backend**: Automated Docker build and deployment to Cloud Run
+- **Testing**: Unit tests run before deployment
+- **Security**: Service account authentication
+
+## Monitoring & Maintenance
+
+### Health Checks
 ```bash
-# Get the service URL
+# Test backend health
 SERVICE_URL=$(gcloud run services describe slo-view-backend \
     --platform managed \
     --region us-central1 \
     --format 'value(status.url)')
-
-# Test the health endpoint
 curl $SERVICE_URL/health
-```
 
-Expected response:
-```json
-{
-  "status": "UP",
-  "service": "slo-view-backend",
-  "timestamp": "1234567890123"
-}
-```
-
-### Test Frontend
-```bash
-# Test the website
+# Test frontend
 curl -I https://storage.googleapis.com/slo-view-frontend/index.html
 ```
+
+### Monitoring Commands
+```bash
+# View service logs
+gcloud logs read --service slo-view-backend --limit 50
+
+# Check service status
+gcloud run services list
+
+# View bucket contents
+gsutil ls -la gs://slo-view-frontend
+```
+
+### Cost Optimization
+- **Cloud Run**: Set minimum instances to 0 for cost savings
+- **Cloud Storage**: Use lifecycle policies for old versions
+- **Monitoring**: Set up billing alerts and usage tracking
+
+### Security Best Practices
+- Use least privilege service accounts
+- Rotate service account keys regularly
+- Enable audit logging
+- Monitor access patterns
+- Keep dependencies updated
 
 ## Troubleshooting
 
 ### Common Issues
 
 1. **"Project not found" error:**
-   - Ensure you've set the correct project: `gcloud config set project slo-view-app`
+   - Ensure correct project: `gcloud config set project slo-view-app`
    - Verify project exists: `gcloud projects list`
 
 2. **"Permission denied" errors:**
@@ -250,36 +270,35 @@ curl -I https://storage.googleapis.com/slo-view-frontend/index.html
 
 3. **Docker build failures:**
    - Ensure Docker Desktop is running
-   - Check Docker daemon status: `docker info`
+   - Check Docker daemon: `docker info`
 
-4. **Maven build failures:**
-   - Verify Java version: `java -version`
-   - Check Maven installation: `mvn --version`
+4. **Build failures:**
+   - Frontend: Clear npm cache and reinstall dependencies
+   - Backend: Verify Java and Maven versions
 
-5. **npm build failures:**
-   - Clear npm cache: `npm cache clean --force`
-   - Delete node_modules and reinstall: `rm -rf node_modules && npm install`
+5. **Deployment failures:**
+   - Check Cloud Run service limits
+   - Verify environment variables
+   - Review GitHub Actions logs
 
 ### Getting Help
-
-1. Check the logs in Google Cloud Console
-2. Review the GitHub Actions workflow logs
-3. Verify all prerequisites are installed correctly
-4. Ensure all environment variables and secrets are set
+1. Check Google Cloud Console logs
+2. Review GitHub Actions workflow logs
+3. Verify all prerequisites are installed
+4. Ensure all environment variables are set
 
 ## Next Steps
 
-After successful setup:
-
-1. **Monitor deployments** in Google Cloud Console
-2. **Set up custom domain** (optional)
-3. **Configure monitoring and alerting**
-4. **Implement additional features**
-5. **Set up staging environment**
+After successful deployment:
+1. Set up monitoring and alerting
+2. Configure custom domain (optional)
+3. Implement additional features
+4. Set up staging environment
+5. Plan for scaling and optimization
 
 ## Security Notes
 
-- Never commit the service account key file to version control
+- Never commit service account keys to version control
 - Use environment variables for sensitive configuration
 - Regularly rotate service account keys
 - Monitor access logs and usage
