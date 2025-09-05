@@ -1,6 +1,6 @@
 # SLO View - Deployment Scripts
 
-This directory contains automated deployment and setup scripts for the SLO View application.
+This directory contains automated deployment and setup scripts for the SLO View monorepo application.
 
 ## Scripts Overview
 
@@ -9,7 +9,7 @@ This directory contains automated deployment and setup scripts for the SLO View 
 - **`setup-gcp-infrastructure.sh`** - Linux/Mac script to set up Google Cloud infrastructure
 
 ### Deployment Scripts
-- **`deploy-applications.bat`** - Windows script to deploy both frontend and backend applications
+- **`deploy-applications.bat`** - Windows script to deploy both frontend and backend applications from the monorepo
 - **`verify-deployment.bat`** - Windows script to verify successful deployment
 
 ## Usage
@@ -42,6 +42,7 @@ Before running these scripts, ensure you have:
 - Docker Desktop running
 - Node.js and Maven installed
 - Proper permissions for Google Cloud resources
+- Run scripts from the **monorepo root directory** (SLOView/)
 
 ## Notes
 

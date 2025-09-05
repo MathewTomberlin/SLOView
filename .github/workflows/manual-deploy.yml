@@ -1,0 +1,150 @@
+name: Manual Deployment
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deployment environment'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+        - staging
+        - production
+      deploy_frontend:
+        description: 'Deploy frontend'
+        required: true
+        default: true
+        type: boolean
+      deploy_backend:
+        description: 'Deploy backend'
+        required: true
+        default: true
+        type: boolean
+
+env:
+  PROJECT_ID: slo-view-app
+  REGION: us-west1
+  BUCKET_NAME: slo-view-frontend
+  BACKEND_SERVICE_NAME: slo-view-backend
+
+jobs:
+  manual-deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Setup Google Cloud CLI
+      uses: google-github-actions/setup-gcloud@v2
+      with:
+        service_account_key: ${{ secrets.GCP_SA_KEY }}
+        project_id: ${{ env.PROJECT_ID }}
+    
+    - name: Configure Docker
+      run: gcloud auth configure-docker
+    
+    # Frontend deployment
+    - name: Deploy frontend
+      if: ${{ inputs.deploy_frontend }}
+      run: |
+        cd slo-view-frontend
+        npm ci
+        npm run build
+        
+        if [ "${{ inputs.environment }}" = "production" ]; then
+          gsutil -m rsync -r -d build/ gs://${{ env.BUCKET_NAME }}/
+          echo "✅ Frontend deployed to production: https://storage.googleapis.com/${{ env.BUCKET_NAME }}/index.html"
+        else
+          gsutil -m rsync -r -d build/ gs://${{ env.BUCKET_NAME }}-staging/
+          echo "✅ Frontend deployed to staging: https://storage.googleapis.com/${{ env.BUCKET_NAME }}-staging/index.html"
+        fi
+    
+    # Backend deployment
+    - name: Deploy backend
+      if: ${{ inputs.deploy_backend }}
+      run: |
+        cd slo-view-backend
+        mvn clean package -DskipTests
+        
+        if [ "${{ inputs.environment }}" = "production" ]; then
+          docker build -t gcr.io/${{ env.PROJECT_ID }}/${{ env.BACKEND_SERVICE_NAME }} .
+          docker push gcr.io/${{ env.PROJECT_ID }}/${{ env.BACKEND_SERVICE_NAME }}
+          gcloud run deploy ${{ env.BACKEND_SERVICE_NAME }} \
+            --image gcr.io/${{ env.PROJECT_ID }}/${{ env.BACKEND_SERVICE_NAME }} \
+            --platform managed \
+            --region ${{ env.REGION }} \
+            --allow-unauthenticated \
+            --port 8080 \
+            --memory 512Mi \
+            --cpu 1 \
+            --max-instances 10 \
+            --set-env-vars ENVIRONMENT=production
+          
+          SERVICE_URL=$(gcloud run services describe ${{ env.BACKEND_SERVICE_NAME }} \
+            --platform managed \
+            --region ${{ env.REGION }} \
+            --format 'value(status.url)')
+          echo "✅ Backend deployed to production: $SERVICE_URL"
+        else
+          docker build -t gcr.io/${{ env.PROJECT_ID }}/${{ env.BACKEND_SERVICE_NAME }}-staging .
+          docker push gcr.io/${{ env.PROJECT_ID }}/${{ env.BACKEND_SERVICE_NAME }}-staging
+          gcloud run deploy ${{ env.BACKEND_SERVICE_NAME }}-staging \
+            --image gcr.io/${{ env.PROJECT_ID }}/${{ env.BACKEND_SERVICE_NAME }}-staging \
+            --platform managed \
+            --region ${{ env.REGION }} \
+            --allow-unauthenticated \
+            --port 8080 \
+            --memory 512Mi \
+            --cpu 1 \
+            --max-instances 5 \
+            --set-env-vars ENVIRONMENT=staging
+          
+          SERVICE_URL=$(gcloud run services describe ${{ env.BACKEND_SERVICE_NAME }}-staging \
+            --platform managed \
+            --region ${{ env.REGION }} \
+            --format 'value(status.url)')
+          echo "✅ Backend deployed to staging: $SERVICE_URL"
+        fi
+    
+    - name: Verify deployment
+      run: |
+        if [ "${{ inputs.environment }}" = "production" ]; then
+          # Test production endpoints
+          SERVICE_URL=$(gcloud run services describe ${{ env.BACKEND_SERVICE_NAME }} \
+            --platform managed \
+            --region ${{ env.REGION }} \
+            --format 'value(status.url)')
+          curl -f $SERVICE_URL/health
+          curl -f -I https://storage.googleapis.com/${{ env.BUCKET_NAME }}/index.html
+          echo "🎉 Production deployment verified successfully!"
+        else
+          # Test staging endpoints
+          SERVICE_URL=$(gcloud run services describe ${{ env.BACKEND_SERVICE_NAME }}-staging \
+            --platform managed \
+            --region ${{ env.REGION }} \
+            --format 'value(status.url)')
+          curl -f $SERVICE_URL/health
+          curl -f -I https://storage.googleapis.com/${{ env.BUCKET_NAME }}-staging/index.html
+          echo "🎉 Staging deployment verified successfully!"
+        fi
+    
+    - name: Create deployment summary
+      run: |
+        echo "🚀 **Manual Deployment Complete!**" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "**Environment:** ${{ inputs.environment }}" >> $GITHUB_STEP_SUMMARY
+        echo "**Frontend Deployed:** ${{ inputs.deploy_frontend }}" >> $GITHUB_STEP_SUMMARY
+        echo "**Backend Deployed:** ${{ inputs.deploy_backend }}" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        
+        if [ "${{ inputs.environment }}" = "production" ]; then
+          echo "**Production URLs:**" >> $GITHUB_STEP_SUMMARY
+          echo "- Backend: https://${{ env.BACKEND_SERVICE_NAME }}-${{ env.PROJECT_ID }}.a.run.app" >> $GITHUB_STEP_SUMMARY
+          echo "- Frontend: https://storage.googleapis.com/${{ env.BUCKET_NAME }}/index.html" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "**Staging URLs:**" >> $GITHUB_STEP_SUMMARY
+          echo "- Backend: https://${{ env.BACKEND_SERVICE_NAME }}-staging-${{ env.PROJECT_ID }}.a.run.app" >> $GITHUB_STEP_SUMMARY
+          echo "- Frontend: https://storage.googleapis.com/${{ env.BUCKET_NAME }}-staging/index.html" >> $GITHUB_STEP_SUMMARY
+        fi

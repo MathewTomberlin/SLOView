@@ -1,10 +1,13 @@
 # GitHub Collaboration Workflow
 
 ## Repository Structure
-As determined, we will use separate repositories for frontend and backend:
+We use a monorepo structure for easier community collaboration:
 
-1. `slo-view-frontend` - React frontend application
-2. `slo-view-backend` - Spring Boot API backend
+1. **SLOView** (main repository) - Contains both frontend and backend
+   - `slo-view-frontend/` - React frontend application
+   - `slo-view-backend/` - Spring Boot API backend
+   - `scripts/` - Deployment and setup scripts
+   - Documentation and configuration files
 
 ## Branching Strategy
 
@@ -55,7 +58,7 @@ As determined, we will use separate repositories for frontend and backend:
 - `priority-low` - Low priority issue
 
 ### Issue Templates
-Both repositories will include issue templates for:
+The main repository will include issue templates for:
 1. Bug reports
 2. Feature requests
 3. Documentation improvements
@@ -78,39 +81,55 @@ Both repositories will include issue templates for:
 
 ## CI/CD Pipeline
 
-### Frontend Repository
+### Monorepo CI/CD Strategy
+The CI/CD pipeline handles both frontend and backend in a single workflow:
+
+#### Frontend Pipeline (slo-view-frontend/)
 1. Code linting with ESLint
 2. Unit tests with Jest
 3. Build process validation
-4. Deployment to staging environment on `develop` branch
-5. Deployment to production environment on `main` branch
+4. Deployment to Google Cloud Storage
 
-### Backend Repository
+#### Backend Pipeline (slo-view-backend/)
 1. Code compilation check
 2. Unit tests with JUnit
 3. Integration tests
 4. Docker image build
-5. Deployment to staging environment on `develop` branch
-6. Deployment to production environment on `main` branch
+5. Deployment to Google Cloud Run
+
+#### Combined Deployment
+- Both frontend and backend are deployed together
+- Staging deployment on `develop` branch
+- Production deployment on `main` branch
+- Uses the deployment scripts in `scripts/` directory
 
 ## Development Setup
 
-### Frontend
-1. Clone repository
-2. Run `npm install`
-3. Run `npm start` for local development
-4. Run `npm test` to execute tests
+### Monorepo Setup
+1. Clone the main repository: `git clone <repository-url>`
+2. Navigate to the project: `cd SLOView`
 
-### Backend
-1. Clone repository
-2. Run `mvn clean install`
-3. Run `mvn spring-boot:run` for local development
-4. Run `mvn test` to execute tests
+### Frontend Development
+1. Navigate to frontend: `cd slo-view-frontend`
+2. Install dependencies: `npm install`
+3. Start development server: `npm start`
+4. Run tests: `npm test`
+
+### Backend Development
+1. Navigate to backend: `cd slo-view-backend`
+2. Install dependencies: `mvn clean install`
+3. Start development server: `mvn spring-boot:run`
+4. Run tests: `mvn test`
+
+### Full Stack Development
+1. Start backend: `cd slo-view-backend && mvn spring-boot:run`
+2. Start frontend (in new terminal): `cd slo-view-frontend && npm start`
+3. Both services will run on their respective ports
 
 ## Documentation Standards
 
 ### README Files
-Each repository will have a comprehensive README including:
+The main repository will have a comprehensive README including:
 1. Project description
 2. Installation instructions
 3. Usage examples
