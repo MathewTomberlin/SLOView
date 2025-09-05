@@ -1,0 +1,58 @@
+/* Navigation Bar Styles */
+.navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 60px;
+  background-color: #2c3e50;
+  color: white;
+  z-index: 1000;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.navbar-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 20px;
+  height: 100%;
+  display: flex;
+  align-items: center;
+}
+
+.navbar-title {
+  font-size: 24px;
+  font-weight: 600;
+  margin: 0;
+  color: white;
+  text-decoration: none;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .navbar {
+    height: 50px;
+  }
+  
+  .navbar-container {
+    padding: 0 15px;
+  }
+  
+  .navbar-title {
+    font-size: 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .navbar {
+    height: 45px;
+  }
+  
+  .navbar-container {
+    padding: 0 10px;
+  }
+  
+  .navbar-title {
+    font-size: 18px;
+  }
+}

@@ -1,0 +1,35 @@
+---
+title: Documentation Rules
+description: Non-obvious documentation and explanation guidelines
+scope: ["**/*.md", "**/*.js", "**/*.ts", "**/*.jsx", "**/*.tsx", "**/*.java"]
+---
+
+# Documentation Rules (Non-Obvious Only)
+
+## Project Context Documentation
+- Map implementation uses OpenStreetMap with Leaflet.js, not Google Maps or Mapbox as might be assumed
+- Project consists of two separate repositories (frontend and backend) with no shared code
+- Frontend is deployed to Google Cloud Storage (static hosting), not a traditional web server
+- Backend is deployed to Google Cloud Run (containerized), not a traditional server
+
+## Technical Implementation Details
+- Local tile caching is a critical requirement for map performance and offline viewing
+- Branching strategy follows GitFlow with specific naming conventions (feature/, release/, hotfix/)
+- No authentication is implemented in the MVP (all endpoints are public)
+- Health check endpoint is at `/health` path specifically
+
+## Deployment and Infrastructure
+- Google Cloud Storage requires specific configuration for static file serving
+- Google Cloud Run requires proper containerization and environment configuration
+- CI/CD pipeline uses GitHub Actions for both repositories
+- Separate deployment processes for frontend (static) and backend (containerized)
+
+## Cursor-Specific Documentation Guidelines
+- When explaining concepts, clarify the two-repository architecture
+- Always mention the Google Cloud deployment strategy
+- Explain the offline-first approach for map viewing
+- Document the local tile caching implementation requirements
+- Clarify that this is an MVP with no authentication
+- Mention the specific technology choices (Leaflet.js, OpenStreetMap) and why they were selected
+- Explain the separation of concerns between frontend and backend
+- Document the manual testing requirements for map functionality

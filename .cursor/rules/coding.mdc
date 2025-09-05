@@ -1,0 +1,43 @@
+---
+title: Coding Rules
+description: Non-obvious coding requirements and patterns
+scope: ["**/*.js", "**/*.ts", "**/*.jsx", "**/*.tsx", "**/*.java"]
+---
+
+# Coding Rules (Non-Obvious Only)
+
+## Map Implementation Requirements
+- Map viewer implementation must use Leaflet.js with OpenStreetMap data, not Google Maps or Mapbox
+- Local tile caching is required for map performance and offline viewing
+- Implement proper error handling for tile loading failures
+- Consider memory management when caching large numbers of tiles
+
+## File Structure and Naming
+- Component files must follow the pattern: ComponentName.js with ComponentName.css
+- Separate concerns: keep map logic separate from UI components
+- Use consistent naming conventions across both repositories
+
+## API and Backend Requirements
+- All API endpoints must be public (no authentication) for MVP
+- Backend health check endpoint must be at `/health` path
+- Implement proper CORS headers for frontend-backend communication
+- Use RESTful API design patterns
+
+## Deployment Considerations
+- Frontend must be deployable to Google Cloud Storage static hosting
+- Backend must be containerized for Google Cloud Run deployment
+- Include proper Dockerfile for backend containerization
+- Configure build scripts for static file generation
+
+## Testing Requirements
+- Tests for map functionality require manual UI testing for drag and zoom features
+- Implement unit tests for API endpoints
+- Test offline functionality by simulating network disconnection
+- Verify cross-browser compatibility for map features
+
+## Cursor-Specific Coding Guidelines
+- When writing code, consider both repositories and their deployment requirements
+- Always include proper error handling for network and storage operations
+- Write code that works with the Google Cloud deployment strategy
+- Consider performance implications of local tile caching
+- Implement proper logging for debugging deployment issues

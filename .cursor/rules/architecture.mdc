@@ -1,0 +1,33 @@
+---
+title: Architecture Rules
+description: Non-obvious architectural constraints and guidelines
+scope: ["**/*.js", "**/*.ts", "**/*.jsx", "**/*.tsx", "**/*.java", "**/*.md"]
+---
+
+# Architecture Rules (Non-Obvious Only)
+
+## Core Architecture Constraints
+- Map viewer must use local tile caching (not real-time API calls) for performance and offline viewing
+- Frontend must be deployable to Google Cloud Storage static hosting
+- Backend must be containerized for Google Cloud Run deployment
+- Two separate repositories required (no shared code between frontend and backend)
+
+## Deployment Architecture
+- GitHub Actions CI/CD pipeline required for both repositories
+- Frontend builds to static files for Google Cloud Storage deployment
+- Backend builds to Docker container for Google Cloud Run deployment
+- No authentication in MVP (public endpoints only)
+- Health check endpoint required at `/health` for backend
+
+## Map Implementation Architecture
+- Map implementation must use OpenStreetMap with Leaflet.js (not Google Maps or Mapbox)
+- Local tile caching system must be implemented for offline viewing
+- Map tiles should be cached in browser local storage
+- Consider tile size and storage limits when designing caching strategy
+
+## Cursor-Specific Architecture Guidelines
+- When suggesting architectural changes, consider Google Cloud deployment constraints
+- Always maintain separation between frontend and backend repositories
+- Design for offline-first map viewing capabilities
+- Consider scalability implications of local tile caching
+- Ensure architecture supports the branching strategy: main/develop with feature/release/hotfix naming conventions
