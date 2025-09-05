@@ -1,0 +1,41 @@
+# AGENTS.md
+
+This file provides guidance to agents when working with code in this repository.
+
+## Project Overview
+- Two separate repositories: `slo-view-frontend` (React) and `slo-view-backend` (Spring Boot)
+- Frontend hosted in Google Cloud Storage, backend in Google Cloud Run
+- Map implementation uses OpenStreetMap with Leaflet.js (not Google Maps or Mapbox)
+
+## Essential Commands
+
+### Frontend (React)
+- Development: `npm start`
+- Build: `npm run build`
+- Test: `npm test`
+- Run single test: `npm test -- --testNamePattern="test-name"`
+
+### Backend (Spring Boot)
+- Development: `mvn spring-boot:run`
+- Build: `mvn clean package`
+- Test: `mvn test`
+- Run single test: `mvn test -Dtest=TestClassName#testMethodName`
+
+## Code Style Guidelines
+- Component structure: separate .js and .css files (e.g., Navbar.js + Navbar.css)
+- All public methods must be documented
+- Complex logic requires inline comments
+- Conventional commits: feat:, fix:, docs:, style:, refactor:, test:, chore:
+
+## Project-Specific Patterns
+- Map viewer uses local tile caching for performance (not real-time API calls)
+- Branching strategy: main/develop with feature/release/hotfix naming conventions
+- GitHub Actions CI/CD with Google Cloud deployment
+- No authentication in MVP (public endpoints only)
+- Health check endpoint at `/health` for backend
+
+## Critical Gotchas
+- Frontend must be deployed to Google Cloud Storage (not traditional web server)
+- Backend must be containerized for Google Cloud Run deployment
+- Map tiles require local caching implementation for offline viewing
+- Separate repositories mean no shared code between frontend and backend
