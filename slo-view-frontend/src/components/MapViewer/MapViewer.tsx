@@ -19,6 +19,20 @@ const MapViewer: React.FC = () => {
   useEffect(() => {
     // Initialize the map
     if (mapRef.current && !mapInstanceRef.current) {
+      // Configure custom marker icons
+      const customIcon = L.icon({
+        iconUrl: '/slo-view-frontend/images/marker-icon.svg',
+        iconRetinaUrl: '/slo-view-frontend/images/marker-icon-2x.svg',
+        shadowUrl: '/slo-view-frontend/images/marker-shadow.svg',
+        iconSize: [25, 41],
+        iconAnchor: [12, 41],
+        popupAnchor: [1, -34],
+        shadowSize: [41, 41]
+      });
+
+      // Set default icon for all markers
+      L.Marker.prototype.options.icon = customIcon;
+
       // San Luis Obispo county center coordinates
       const sloCenter: [number, number] = [35.2828, -120.6596];
       
