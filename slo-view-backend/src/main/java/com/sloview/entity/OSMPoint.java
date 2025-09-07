@@ -120,4 +120,5 @@ public class OSMPoint {
     public Double getLatitude() {
         return way != null ? way.getY() : null;
     }
+    
 }

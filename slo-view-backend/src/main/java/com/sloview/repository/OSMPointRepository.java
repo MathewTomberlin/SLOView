@@ -24,4 +24,11 @@ public interface OSMPointRepository extends JpaRepository<OSMPoint, Long> {
     List<OSMPoint> findByShop(String shop);
     
     List<OSMPoint> findByNameContaining(String name);
+    
+    @Query(value = "SELECT osm_id, name, amenity, tourism, shop, highway, \"natural\", leisure, " +
+                   "ST_X(ST_Transform(way, 4326)) as longitude, " +
+                   "ST_Y(ST_Transform(way, 4326)) as latitude " +
+                   "FROM planet_osm_point WHERE amenity = :amenity", 
+           nativeQuery = true)
+    List<Object[]> findByAmenityWithWGS84(@Param("amenity") String amenity);
 }
