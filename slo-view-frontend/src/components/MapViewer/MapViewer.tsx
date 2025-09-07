@@ -37,35 +37,35 @@ interface OSMPoint {
 const MapViewer: React.FC = () => {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
-  const [features, setFeatures] = useState<MapFeature[]>([]);
+  const [features] = useState<MapFeature[]>([]);
   const [restaurants, setRestaurants] = useState<OSMPoint[]>([]);
   const [showRestaurants, setShowRestaurants] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [loading] = useState(false);
   const [restaurantMarkers, setRestaurantMarkers] = useState<L.Marker[]>([]);
   const [featureMarkers, setFeatureMarkers] = useState<L.Marker[]>([]);
 
-  const fetchMapFeatures = async (bounds: L.LatLngBounds) => {
-    try {
-      setLoading(true);
-      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:8080';
-      const response = await fetch(
-        `${apiUrl}/api/map/points?` +
-        `minLon=${bounds.getWest()}&minLat=${bounds.getSouth()}&` +
-        `maxLon=${bounds.getEast()}&maxLat=${bounds.getNorth()}`
-      );
-      
-      if (response.ok) {
-        const data = await response.json();
-        setFeatures(data);
-      } else {
-        console.error('Failed to fetch map features:', response.statusText);
-      }
-    } catch (error) {
-      console.error('Error fetching map features:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  // const fetchMapFeatures = async (bounds: L.LatLngBounds) => {
+  //   try {
+  //     setLoading(true);
+  //     const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:8080';
+  //     const response = await fetch(
+  //       `${apiUrl}/api/map/points?` +
+  //       `minLon=${bounds.getWest()}&minLat=${bounds.getSouth()}&` +
+  //       `maxLon=${bounds.getEast()}&maxLat=${bounds.getNorth()}`
+  //     );
+  //     
+  //     if (response.ok) {
+  //       const data = await response.json();
+  //       setFeatures(data);
+  //     } else {
+  //       console.error('Failed to fetch map features:', response.statusText);
+  //     }
+  //   } catch (error) {
+  //     console.error('Error fetching map features:', error);
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
 
   const fetchRestaurants = async () => {
     try {
@@ -97,16 +97,16 @@ const MapViewer: React.FC = () => {
         shadowSize: [41, 41]
       });
 
-      // Configure restaurant icon
-      const restaurantIcon = L.icon({
-        iconUrl: '/slo-view-frontend/images/marker-icon.svg',
-        iconRetinaUrl: '/slo-view-frontend/images/marker-icon-2x.svg',
-        shadowUrl: '/slo-view-frontend/images/marker-shadow.svg',
-        iconSize: [25, 41],
-        iconAnchor: [12, 41],
-        popupAnchor: [1, -34],
-        shadowSize: [41, 41]
-      });
+      // Configure restaurant icon (currently using same as custom icon)
+      // const restaurantIcon = L.icon({
+      //   iconUrl: '/slo-view-frontend/images/marker-icon.svg',
+      //   iconRetinaUrl: '/slo-view-frontend/images/marker-icon-2x.svg',
+      //   shadowUrl: '/slo-view-frontend/images/marker-shadow.svg',
+      //   iconSize: [25, 41],
+      //   iconAnchor: [12, 41],
+      //   popupAnchor: [1, -34],
+      //   shadowSize: [41, 41]
+      // });
 
       // Set default icon for all markers
       L.Marker.prototype.options.icon = customIcon;
@@ -192,7 +192,7 @@ const MapViewer: React.FC = () => {
       });
       setFeatureMarkers(newFeatureMarkers);
     }
-  }, [features]);
+  }, [features, featureMarkers]);
 
   // Effect to handle restaurant display toggle
   useEffect(() => {
@@ -222,7 +222,7 @@ const MapViewer: React.FC = () => {
       });
       setRestaurantMarkers([]);
     }
-  }, [showRestaurants, restaurants]);
+  }, [showRestaurants, restaurants, restaurantMarkers]);
 
   // Cleanup effect for markers
   useEffect(() => {
