@@ -15,6 +15,9 @@ RUN mvn clean package -DskipTests
 # Runtime stage
 FROM openjdk:11-jre-slim
 
+# Install curl for health checks
+RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
+
 # Create non-root user for security
 RUN addgroup --system spring && adduser --system spring --ingroup spring
 

@@ -2,6 +2,7 @@ package com.sloview;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 
 /**
  * Main application class for SLO View Backend API.
@@ -10,6 +11,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
  * frontend application, including a health check endpoint.
  */
 @SpringBootApplication
+@EnableJpaRepositories
 public class SLOViewApplication {
 
     /**
