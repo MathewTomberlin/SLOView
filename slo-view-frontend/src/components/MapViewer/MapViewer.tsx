@@ -1,7 +1,15 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import './MapViewer.css';
+
+interface MapFeature {
+  id: number;
+  featureType: string;
+  name: string;
+  geometry: any;
+  properties: any;
+}
 
 /**
  * Map viewer component for displaying San Luis Obispo county map.
@@ -15,6 +23,31 @@ import './MapViewer.css';
 const MapViewer: React.FC = () => {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
+  const [features, setFeatures] = useState<MapFeature[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  const fetchMapFeatures = async (bounds: L.LatLngBounds) => {
+    try {
+      setLoading(true);
+      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:8080';
+      const response = await fetch(
+        `${apiUrl}/api/map/features?` +
+        `minLon=${bounds.getWest()}&minLat=${bounds.getSouth()}&` +
+        `maxLon=${bounds.getEast()}&maxLat=${bounds.getNorth()}`
+      );
+      
+      if (response.ok) {
+        const data = await response.json();
+        setFeatures(data);
+      } else {
+        console.error('Failed to fetch map features:', response.statusText);
+      }
+    } catch (error) {
+      console.error('Error fetching map features:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     // Initialize the map
@@ -60,14 +93,19 @@ const MapViewer: React.FC = () => {
       const sloMarker = L.marker([35.2828, -120.6596]).addTo(map);
       sloMarker.bindPopup('<b>San Luis Obispo</b><br>County Center').openPopup();
 
-      // Add some basic styling for better UX
-      map.on('zoomend', () => {
-        console.log('Map zoom level:', map.getZoom());
-      });
-
+      // Add event handlers for fetching map features
       map.on('moveend', () => {
         console.log('Map center:', map.getCenter());
+        fetchMapFeatures(map.getBounds());
       });
+
+      map.on('zoomend', () => {
+        console.log('Map zoom level:', map.getZoom());
+        fetchMapFeatures(map.getBounds());
+      });
+
+      // Initial load of features
+      fetchMapFeatures(map.getBounds());
     }
 
     // Cleanup function
@@ -79,8 +117,44 @@ const MapViewer: React.FC = () => {
     };
   }, []);
 
+  // Effect to render features on the map
+  useEffect(() => {
+    if (mapInstanceRef.current && features.length > 0) {
+      // Clear existing feature markers
+      mapInstanceRef.current.eachLayer((layer) => {
+        if (layer instanceof L.Marker && layer !== mapInstanceRef.current?.getLayers()[0]) {
+          mapInstanceRef.current?.removeLayer(layer);
+        }
+      });
+
+      // Add new feature markers
+      features.forEach((feature) => {
+        if (feature.geometry && feature.geometry.type === 'Point') {
+          const [lng, lat] = feature.geometry.coordinates;
+          const marker = L.marker([lat, lng]).addTo(mapInstanceRef.current!);
+          
+          let popupContent = `<b>${feature.name || 'Unnamed Feature'}</b>`;
+          if (feature.featureType) {
+            popupContent += `<br><i>Type: ${feature.featureType}</i>`;
+          }
+          if (feature.properties) {
+            popupContent += `<br>Properties: ${JSON.stringify(feature.properties)}`;
+          }
+          
+          marker.bindPopup(popupContent);
+        }
+      });
+    }
+  }, [features]);
+
   return (
     <div className="map-viewer">
+      {loading && (
+        <div className="loading-indicator">
+          <div className="loading-spinner"></div>
+          <span>Loading map features...</span>
+        </div>
+      )}
       <div ref={mapRef} className="map-container" />
     </div>
   );
