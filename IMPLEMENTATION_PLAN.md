@@ -117,7 +117,7 @@ sudo apt install -y postgis postgresql-14-postgis-3
 sudo apt install -y osm2pgsql curl wget
 
 # Configure PostgreSQL
-sudo -u postgres psql -c "ALTER USER postgres PASSWORD 'secure_password_here';"
+sudo -u postgres psql -c "ALTER USER postgres PASSWORD 'YOUR_POSTGRES_PASSWORD';"
 sudo -u postgres createdb slo_view_db
 
 # Enable PostGIS extension
@@ -135,7 +135,7 @@ sudo systemctl restart postgresql
 sudo systemctl enable postgresql
 
 # Create application user
-sudo -u postgres psql -c "CREATE USER slo_view_user WITH PASSWORD 'app_password_here';"
+sudo -u postgres psql -c "CREATE USER slo_view_user WITH PASSWORD 'YOUR_APP_PASSWORD';"
 sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE slo_view_db TO slo_view_user;"
 sudo -u postgres psql -d slo_view_db -c "GRANT ALL ON SCHEMA public TO slo_view_user;"
 ```
@@ -180,7 +180,7 @@ sudo -u postgres psql -d slo_view_db -c "GRANT ALL ON SCHEMA public TO slo_view_
 # Database Configuration
 spring.datasource.url=jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:slo_view_db}
 spring.datasource.username=${DB_USERNAME:slo_view_user}
-spring.datasource.password=${DB_PASSWORD:app_password_here}
+spring.datasource.password=${DB_PASSWORD}
 spring.datasource.driver-class-name=org.postgresql.Driver
 
 # HikariCP Configuration

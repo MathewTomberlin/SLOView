@@ -121,3 +121,7 @@ dist/
 *.iml
 *.ipr
 *.iws
+
+# Large data files
+*.osm.pbf
+*.pbf

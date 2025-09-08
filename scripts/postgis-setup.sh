@@ -16,7 +16,8 @@ sudo apt install -y postgis postgresql-14-postgis-3
 sudo apt install -y osm2pgsql curl wget
 
 # Configure PostgreSQL
-sudo -u postgres psql -c "ALTER USER postgres PASSWORD 'secure_password_here';"
+# NOTE: Replace 'YOUR_POSTGRES_PASSWORD' with a secure password
+sudo -u postgres psql -c "ALTER USER postgres PASSWORD 'YOUR_POSTGRES_PASSWORD';"
 sudo -u postgres createdb slo_view_db
 
 # Enable PostGIS extension
@@ -34,11 +35,12 @@ sudo systemctl restart postgresql
 sudo systemctl enable postgresql
 
 # Create application user
-sudo -u postgres psql -c "CREATE USER slo_view_user WITH PASSWORD 'app_password_here';"
+# NOTE: Replace 'YOUR_APP_PASSWORD' with a secure password
+sudo -u postgres psql -c "CREATE USER slo_view_user WITH PASSWORD 'YOUR_APP_PASSWORD';"
 sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE slo_view_db TO slo_view_user;"
 sudo -u postgres psql -d slo_view_db -c "GRANT ALL ON SCHEMA public TO slo_view_user;"
 
 echo "PostgreSQL and PostGIS installation completed!"
 echo "Database: slo_view_db"
 echo "User: slo_view_user"
-echo "Password: app_password_here"
+echo "Password: [Set in environment variables]"
