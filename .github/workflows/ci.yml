@@ -92,14 +92,15 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
     
+    - name: Authenticate to Google Cloud
+      uses: google-github-actions/auth@v2
+      with:
+        credentials_json: ${{ secrets.GCP_SA_KEY }}
+    
     - name: Setup Google Cloud CLI
       uses: google-github-actions/setup-gcloud@v2
       with:
-        service_account_key: ${{ secrets.GCP_SA_KEY }}
         project_id: ${{ env.PROJECT_ID }}
-    
-    - name: Configure Docker
-      run: gcloud auth configure-docker
     
     - name: Download frontend build
       uses: actions/download-artifact@v4
@@ -107,19 +108,12 @@ jobs:
         name: frontend-build
         path: slo-view-frontend/build/
     
-    - name: Download backend build
-      uses: actions/download-artifact@v4
-      with:
-        name: backend-build
-        path: slo-view-backend/target/
-    
     - name: Deploy backend to staging
       run: |
-        cd slo-view-backend
-        docker build -t gcr.io/${{ env.PROJECT_ID }}/${{ env.BACKEND_SERVICE_NAME }}-staging .
-        docker push gcr.io/${{ env.PROJECT_ID }}/${{ env.BACKEND_SERVICE_NAME }}-staging
+        # Force new revision by adding timestamp
+        TIMESTAMP=$(date +%s)
         gcloud run deploy ${{ env.BACKEND_SERVICE_NAME }}-staging \
-          --image gcr.io/${{ env.PROJECT_ID }}/${{ env.BACKEND_SERVICE_NAME }}-staging \
+          --source slo-view-backend \
           --platform managed \
           --region ${{ env.REGION }} \
           --allow-unauthenticated \
@@ -127,7 +121,7 @@ jobs:
           --memory 512Mi \
           --cpu 1 \
           --max-instances 5 \
-          --set-env-vars ENVIRONMENT=staging
+          --set-env-vars ENVIRONMENT=staging,DB_HOST=${{ secrets.DB_HOST }},DB_PORT=${{ secrets.DB_PORT }},DB_USERNAME=${{ secrets.DB_USERNAME }},DB_PASSWORD=${{ secrets.DB_PASSWORD }},DB_NAME=${{ secrets.DB_NAME }},DEPLOY_TIMESTAMP=$TIMESTAMP
     
     - name: Deploy frontend to staging
       run: |
@@ -162,14 +156,15 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
     
+    - name: Authenticate to Google Cloud
+      uses: google-github-actions/auth@v2
+      with:
+        credentials_json: ${{ secrets.GCP_SA_KEY }}
+    
     - name: Setup Google Cloud CLI
       uses: google-github-actions/setup-gcloud@v2
       with:
-        service_account_key: ${{ secrets.GCP_SA_KEY }}
         project_id: ${{ env.PROJECT_ID }}
-    
-    - name: Configure Docker
-      run: gcloud auth configure-docker
     
     - name: Download frontend build
       uses: actions/download-artifact@v4
@@ -177,19 +172,12 @@ jobs:
         name: frontend-build
         path: slo-view-frontend/build/
     
-    - name: Download backend build
-      uses: actions/download-artifact@v4
-      with:
-        name: backend-build
-        path: slo-view-backend/target/
-    
     - name: Deploy backend to production
       run: |
-        cd slo-view-backend
-        docker build -t gcr.io/${{ env.PROJECT_ID }}/${{ env.BACKEND_SERVICE_NAME }} .
-        docker push gcr.io/${{ env.PROJECT_ID }}/${{ env.BACKEND_SERVICE_NAME }}
+        # Force new revision by adding timestamp
+        TIMESTAMP=$(date +%s)
         gcloud run deploy ${{ env.BACKEND_SERVICE_NAME }} \
-          --image gcr.io/${{ env.PROJECT_ID }}/${{ env.BACKEND_SERVICE_NAME }} \
+          --source slo-view-backend \
           --platform managed \
           --region ${{ env.REGION }} \
           --allow-unauthenticated \
@@ -197,7 +185,7 @@ jobs:
           --memory 512Mi \
           --cpu 1 \
           --max-instances 10 \
-          --set-env-vars ENVIRONMENT=production,DB_HOST=${{ secrets.DB_HOST }},DB_PORT=${{ secrets.DB_PORT }},DB_USERNAME=${{ secrets.DB_USERNAME }},DB_PASSWORD=${{ secrets.DB_PASSWORD }},DB_NAME=${{ secrets.DB_NAME }}
+          --set-env-vars ENVIRONMENT=production,DB_HOST=${{ secrets.DB_HOST }},DB_PORT=${{ secrets.DB_PORT }},DB_USERNAME=${{ secrets.DB_USERNAME }},DB_PASSWORD=${{ secrets.DB_PASSWORD }},DB_NAME=${{ secrets.DB_NAME }},DEPLOY_TIMESTAMP=$TIMESTAMP
     
     - name: Deploy frontend to production
       run: |
