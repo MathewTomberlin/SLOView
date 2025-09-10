@@ -60,10 +60,7 @@ const MapViewer: React.FC = () => {
   // Handler for radius changes
   const handleRadiusChange = (newRadius: number) => {
     setSearchRadius(newRadius);
-    // Re-query current layer if one is selected
-    if (selectedLayer !== 'none') {
-      fetchLayerData(selectedLayer, centerPosition[0], centerPosition[1], newRadius);
-    }
+    // The useEffect will handle the API call when searchRadius changes
   };
 
   // const fetchMapFeatures = async (bounds: L.LatLngBounds) => {
@@ -91,7 +88,7 @@ const MapViewer: React.FC = () => {
 
   const fetchLayerData = useCallback(async (layerType: string, lat?: number, lon?: number, radius?: number) => {
     try {
-      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:8080';
+      const apiUrl = process.env.REACT_APP_API_URL || 'https://slo-view-backend-220847261978.us-west1.run.app';
       // Use the provided coordinates or fall back to current center position
       const centerLat = lat ?? centerPosition[0];
       const centerLon = lon ?? centerPosition[1];
@@ -261,11 +258,11 @@ const MapViewer: React.FC = () => {
 
   // Separate effect for initial data loading
   useEffect(() => {
-    if (mapInstanceRef.current) {
-      // Initial load of restaurants (default layer)
-      fetchLayerData('restaurants', centerPosition[0], centerPosition[1]);
+    if (mapInstanceRef.current && selectedLayer !== 'none') {
+      // Only fetch data if a layer is selected
+      fetchLayerData(selectedLayer, centerPosition[0], centerPosition[1], searchRadius);
     }
-  }, [fetchLayerData, centerPosition]); // Include both dependencies
+  }, [fetchLayerData, centerPosition, selectedLayer, searchRadius]); // Include all dependencies
 
   // Effect to render features on the map
   useEffect(() => {
@@ -496,10 +493,7 @@ const MapViewer: React.FC = () => {
                 name="layer"
                 value="restaurants"
                 checked={selectedLayer === 'restaurants'}
-                onChange={(e) => {
-                  setSelectedLayer(e.target.value);
-                  fetchLayerData(e.target.value, centerPosition[0], centerPosition[1]);
-                }}
+                onChange={(e) => setSelectedLayer(e.target.value)}
               />
               <span className="radio-mark"></span>
               Restaurants ({restaurants.length})
@@ -510,10 +504,7 @@ const MapViewer: React.FC = () => {
                 name="layer"
                 value="streets"
                 checked={selectedLayer === 'streets'}
-                onChange={(e) => {
-                  setSelectedLayer(e.target.value);
-                  fetchLayerData(e.target.value, centerPosition[0], centerPosition[1]);
-                }}
+                onChange={(e) => setSelectedLayer(e.target.value)}
               />
               <span className="radio-mark"></span>
               Streets ({streets.length})
@@ -524,10 +515,7 @@ const MapViewer: React.FC = () => {
                 name="layer"
                 value="pois"
                 checked={selectedLayer === 'pois'}
-                onChange={(e) => {
-                  setSelectedLayer(e.target.value);
-                  fetchLayerData(e.target.value, centerPosition[0], centerPosition[1]);
-                }}
+                onChange={(e) => setSelectedLayer(e.target.value)}
               />
               <span className="radio-mark"></span>
               Points of Interest ({pois.length})
