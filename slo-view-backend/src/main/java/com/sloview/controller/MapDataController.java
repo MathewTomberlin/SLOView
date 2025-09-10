@@ -72,22 +72,41 @@ public class MapDataController {
     }
     
     /**
-     * Get roads from the GIS API.
+     * Get restaurants near a specific location.
+     */
+    @GetMapping("/restaurants")
+    public ResponseEntity<List<Map<String, Object>>> getRestaurants(
+            @RequestParam double lon,
+            @RequestParam double lat,
+            @RequestParam(required = false, defaultValue = "5000") double distance,
+            @RequestParam(required = false, defaultValue = "50") Integer limit) {
+        List<Map<String, Object>> restaurants = gisApiService.findNearbyFeatures(lon, lat, distance, "mv_restaurants", limit);
+        return ResponseEntity.ok(restaurants);
+    }
+    
+    /**
+     * Get roads near a specific location.
      */
     @GetMapping("/roads")
     public ResponseEntity<List<Map<String, Object>>> getRoads(
-            @RequestParam(required = false) Integer limit) {
-        List<Map<String, Object>> roads = gisApiService.getRoads(limit);
+            @RequestParam double lon,
+            @RequestParam double lat,
+            @RequestParam(required = false, defaultValue = "5000") double distance,
+            @RequestParam(required = false, defaultValue = "50") Integer limit) {
+        List<Map<String, Object>> roads = gisApiService.findNearbyFeatures(lon, lat, distance, "mv_road_network", limit);
         return ResponseEntity.ok(roads);
     }
     
     /**
-     * Get points of interest from the GIS API.
+     * Get points of interest near a specific location.
      */
     @GetMapping("/pois")
     public ResponseEntity<List<Map<String, Object>>> getPOIs(
-            @RequestParam(required = false) Integer limit) {
-        List<Map<String, Object>> pois = gisApiService.getPOIs(limit);
+            @RequestParam double lon,
+            @RequestParam double lat,
+            @RequestParam(required = false, defaultValue = "5000") double distance,
+            @RequestParam(required = false, defaultValue = "50") Integer limit) {
+        List<Map<String, Object>> pois = gisApiService.findNearbyFeatures(lon, lat, distance, "planet_osm_point", limit);
         return ResponseEntity.ok(pois);
     }
     
@@ -109,7 +128,7 @@ public class MapDataController {
             @RequestParam double lat,
             @RequestParam(required = false, defaultValue = "1000") double distance,
             @RequestParam(required = false, defaultValue = "mv_restaurants") String table,
-            @RequestParam(required = false) Integer limit) {
+            @RequestParam(required = false, defaultValue = "50") Integer limit) {
         List<Map<String, Object>> features = gisApiService.findNearbyFeatures(lon, lat, distance, table, limit);
         return ResponseEntity.ok(features);
     }
