@@ -53,6 +53,7 @@ const MapViewer: React.FC = () => {
   const featureMarkersRef = useRef<L.Marker[]>([]);
   const centerMarkerRef = useRef<L.Marker | null>(null);
   const selectedLayerRef = useRef<string>('none');
+  const fetchLayerDataRef = useRef<typeof fetchLayerData | null>(null);
   const [centerPosition, setCenterPosition] = useState<[number, number]>([35.2828, -120.6596]);
   const [searchRadius, setSearchRadius] = useState<number>(200); // Default 200m radius
 
@@ -136,6 +137,11 @@ const MapViewer: React.FC = () => {
       console.error(`Error fetching ${layerType}:`, error);
     }
   }, [centerPosition, searchRadius]);
+
+  // Update the ref whenever fetchLayerData changes
+  useEffect(() => {
+    fetchLayerDataRef.current = fetchLayerData;
+  }, [fetchLayerData]);
 
   useEffect(() => {
     // Initialize the map
@@ -228,8 +234,8 @@ const MapViewer: React.FC = () => {
         marker.bindPopup(`<b>Search Center</b><br>Lat: ${newPosition[0].toFixed(4)}<br>Lon: ${newPosition[1].toFixed(4)}`);
         
         // Re-query current layer if one is selected
-        if (selectedLayerRef.current !== 'none') {
-          fetchLayerData(selectedLayerRef.current, newPosition[0], newPosition[1]);
+        if (selectedLayerRef.current !== 'none' && fetchLayerDataRef.current) {
+          fetchLayerDataRef.current(selectedLayerRef.current, newPosition[0], newPosition[1]);
         }
       });
 
@@ -259,7 +265,7 @@ const MapViewer: React.FC = () => {
       // Initial load of restaurants (default layer)
       fetchLayerData('restaurants', centerPosition[0], centerPosition[1]);
     }
-  }, [fetchLayerData]); // Only depend on fetchLayerData, not centerPosition
+  }, [fetchLayerData, centerPosition]); // Include both dependencies
 
   // Effect to render features on the map
   useEffect(() => {
