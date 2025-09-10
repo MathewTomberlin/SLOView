@@ -70,7 +70,15 @@ const MapViewer: React.FC = () => {
   const fetchRestaurants = async () => {
     try {
       const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:8080';
-      const response = await fetch(`${apiUrl}/api/map/points/amenity/restaurant/wgs84`);
+      // Use the new location-based restaurants endpoint
+      const centerLon = -120.6596;
+      const centerLat = 35.2828;
+      const radius = 1000; // 1km radius
+      const limit = 50;
+      
+      const response = await fetch(
+        `${apiUrl}/api/map/restaurants?lon=${centerLon}&lat=${centerLat}&distance=${radius}&limit=${limit}`
+      );
       
       if (response.ok) {
         const data = await response.json();

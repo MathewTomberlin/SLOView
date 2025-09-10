@@ -455,7 +455,12 @@ public class GISApiService {
                 Map<String, Object> nearbyFeature = new HashMap<>();
                 
                 // Extract ID
-                nearbyFeature.put("osmId", Long.parseLong(feature.path("id").asText()));
+                String idStr = feature.path("id").asText();
+                if (!idStr.isEmpty()) {
+                    nearbyFeature.put("osmId", Long.parseLong(idStr));
+                } else {
+                    nearbyFeature.put("osmId", 0L);
+                }
                 
                 // Extract properties
                 JsonNode properties = feature.path("properties");
