@@ -2,16 +2,18 @@ package com.sloview;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
+import org.springframework.scheduling.annotation.EnableAsync;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
 /**
  * Main application class for SLO View Backend API.
  * 
  * This Spring Boot application provides a minimal API backend for the SLO View
- * frontend application, including a health check endpoint.
+ * frontend application, including a health check endpoint and GIS API integration.
  */
 @SpringBootApplication
-@EnableJpaRepositories
+@EnableAsync
+@EnableScheduling
 public class SLOViewApplication {
 
     /**

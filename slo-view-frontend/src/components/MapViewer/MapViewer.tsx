@@ -192,7 +192,7 @@ const MapViewer: React.FC = () => {
       });
       setFeatureMarkers(newFeatureMarkers);
     }
-  }, [features, featureMarkers]);
+  }, [features]);
 
   // Effect to handle restaurant display toggle
   useEffect(() => {
@@ -222,7 +222,7 @@ const MapViewer: React.FC = () => {
       });
       setRestaurantMarkers([]);
     }
-  }, [showRestaurants, restaurants, restaurantMarkers]);
+  }, [showRestaurants, restaurants]);
 
   // Cleanup effect for markers
   useEffect(() => {
@@ -236,7 +236,7 @@ const MapViewer: React.FC = () => {
         });
       }
     };
-  }, [featureMarkers, restaurantMarkers]);
+  }, []); // Empty dependency array for cleanup only
 
   return (
     <div className="map-viewer">
