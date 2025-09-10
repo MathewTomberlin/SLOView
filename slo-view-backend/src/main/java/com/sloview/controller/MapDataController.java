@@ -79,7 +79,7 @@ public class MapDataController {
             @RequestParam double lon,
             @RequestParam double lat,
             @RequestParam(required = false, defaultValue = "5000") double distance,
-            @RequestParam(required = false, defaultValue = "200") Integer limit) {
+            @RequestParam(required = false, defaultValue = "1000") Integer limit) {
         List<Map<String, Object>> restaurants = gisApiService.findNearbyFeatures(lon, lat, distance, "mv_restaurants", limit);
         return ResponseEntity.ok(restaurants);
     }
@@ -92,7 +92,7 @@ public class MapDataController {
             @RequestParam double lon,
             @RequestParam double lat,
             @RequestParam(required = false, defaultValue = "5000") double distance,
-            @RequestParam(required = false, defaultValue = "200") Integer limit) {
+            @RequestParam(required = false, defaultValue = "1000") Integer limit) {
         List<Map<String, Object>> roads = gisApiService.findNearbyFeatures(lon, lat, distance, "mv_road_network", limit);
         return ResponseEntity.ok(roads);
     }
@@ -105,7 +105,7 @@ public class MapDataController {
             @RequestParam double lon,
             @RequestParam double lat,
             @RequestParam(required = false, defaultValue = "5000") double distance,
-            @RequestParam(required = false, defaultValue = "200") Integer limit) {
+            @RequestParam(required = false, defaultValue = "1000") Integer limit) {
         List<Map<String, Object>> pois = gisApiService.findNearbyFeatures(lon, lat, distance, "planet_osm_point", limit);
         return ResponseEntity.ok(pois);
     }
@@ -129,7 +129,7 @@ public class MapDataController {
             @RequestParam double lat,
             @RequestParam(required = false, defaultValue = "1000") double distance,
             @RequestParam(required = false, defaultValue = "mv_restaurants") String table,
-            @RequestParam(required = false, defaultValue = "200") Integer limit) {
+            @RequestParam(required = false, defaultValue = "1000") Integer limit) {
         List<Map<String, Object>> features = gisApiService.findNearbyFeatures(lon, lat, distance, table, limit);
         return ResponseEntity.ok(features);
     }

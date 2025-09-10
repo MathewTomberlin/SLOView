@@ -96,7 +96,7 @@ const MapViewer: React.FC = () => {
       const centerLat = lat ?? centerPosition[0];
       const centerLon = lon ?? centerPosition[1];
       const searchRadiusValue = radius ?? searchRadius;
-      const limit = 200;
+      const limit = 1000;
       
       let endpoint = '';
         switch (layerType) {
