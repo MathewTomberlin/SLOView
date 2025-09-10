@@ -1,15 +1,17 @@
 # SLO View - Complete Implementation
 
-A web-based mapping application that displays an interactive map of San Luis Obispo county with drag and zoom functionality. The application consists of a React TypeScript frontend and Spring Boot backend, both deployed to Google Cloud Platform.
+A web-based mapping application that displays an interactive map of San Luis Obispo county with drag and zoom functionality. The application uses a three-tier architecture with React frontend, Spring Boot backend, and FastAPI + PostGIS on a VM.
 
 ## 🎯 Project Overview
 
 The SLO View application features:
 - **React TypeScript Frontend** - Hosted in Google Cloud Storage
-- **Spring Boot Backend** - Hosted in Google Cloud Run with PostGIS integration
-- **PostGIS Database** - PostgreSQL with PostGIS extensions on Compute Engine VM
+- **Spring Boot Backend** - Hosted in Google Cloud Run with FastAPI integration
+- **FastAPI + PostGIS** - Python FastAPI with PostgreSQL on Compute Engine VM
 - **Interactive Map** - OpenStreetMap with Leaflet.js for San Luis Obispo county
-- **Real-time Data** - Live spatial queries from OpenStreetMap data
+- **Real-time Data** - Live spatial queries from OpenStreetMap data via FastAPI
+- **Background Caching** - Spring Boot caches data to minimize API calls
+- **Rate Limiting** - FastAPI implements rate limiting for API protection
 - **Responsive Design** - Works on desktop and mobile devices
 - **CI/CD Pipeline** - Automated testing and deployment via GitHub Actions
 
@@ -24,11 +26,11 @@ The SLO View application features:
 
 ### System Architecture
 ```
-┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   User Browser  │────│  Google Cloud    │────│  Google Cloud   │────│  Google Cloud   │
-│                 │    │  Storage         │    │  Run            │    │  Compute Engine │
-│                 │    │  (Frontend)      │    │  (Backend)      │    │  (PostGIS DB)   │
-└─────────────────┘    └──────────────────┘    └─────────────────┘    └─────────────────┘
+┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│   User Browser  │────│  Google Cloud    │────│  Google Cloud   │────│  Google Cloud   │────│  Google Cloud   │
+│                 │    │  Storage         │    │  Run            │    │  Compute Engine │    │  Compute Engine │
+│                 │    │  (Frontend)      │    │  (Backend)      │    │  (FastAPI)      │    │  (PostGIS DB)   │
+└─────────────────┘    └──────────────────┘    └─────────────────┘    └─────────────────┘    └─────────────────┘
 ```
 
 ## 📁 Repository Structure
@@ -42,10 +44,11 @@ This project contains two separate applications:
 - Responsive design for all screen sizes
 
 ### Backend (`slo-view-backend/`)
-- Spring Boot REST API with PostGIS integration
+- Spring Boot REST API with FastAPI integration
 - Health check endpoint at `/health`
 - Spatial data API endpoints for map features
-- PostgreSQL + PostGIS database connectivity
+- Background caching with scheduled refresh
+- Rate limiting compliance and fallback data
 - Containerized for Google Cloud Run deployment
 
 ## 🚀 Quick Start
@@ -143,7 +146,8 @@ mvn clean package
 
 ### Environment URLs
 - **Frontend**: `https://storage.googleapis.com/slo-view-frontend/index.html`
-- **Backend API**: `https://slo-view-backend-ba5fw55ysa-uw.a.run.app/health`
+- **Backend API**: `https://slo-view-backend-220847261978.us-west1.run.app/health`
+- **FastAPI**: `http://34.83.60.201/` (API status)
 - **PostGIS Database**: `34.83.60.201:5432` (internal access only)
 
 ## 🔧 Configuration
@@ -152,22 +156,17 @@ mvn clean package
 - `GCP_PROJECT_ID`: Google Cloud project ID
 - `GCP_SA_KEY`: Service account key for CI/CD
 - `GCP_BUCKET_NAME`: Cloud Storage bucket name
-- `DB_HOST`: PostGIS database host (34.83.60.201)
-- `DB_PORT`: Database port (5432)
-- `DB_NAME`: Database name (slo_view_db)
-- `DB_USERNAME`: Database username (slo_view_user)
-- `DB_PASSWORD`: Database password
+- `GIS_API_BASE_URL`: FastAPI base URL (http://34.83.60.201)
+
+### Frontend Environment Variables
+- **Production**: `REACT_APP_API_URL=https://slo-view-backend-220847261978.us-west1.run.app`
+- **Local Development**: `REACT_APP_API_URL=http://localhost:8080`
 
 ### GitHub Secrets
 Add these secrets to your GitHub repository for CI/CD:
 - `GCP_PROJECT_ID`
 - `GCP_SA_KEY`
 - `GCP_BUCKET_NAME`
-- `DB_HOST`
-- `DB_PORT`
-- `DB_NAME`
-- `DB_USERNAME`
-- `DB_PASSWORD`
 
 ## 🧪 Testing
 
@@ -193,14 +192,17 @@ scripts\verify-deployment.bat  # Windows
 
 ### ✅ Implemented Features
 - [x] React TypeScript frontend with responsive design
-- [x] Spring Boot backend with PostGIS integration
-- [x] PostgreSQL + PostGIS database on Compute Engine VM
+- [x] Spring Boot backend with FastAPI integration
+- [x] FastAPI + PostgreSQL + PostGIS on Compute Engine VM
 - [x] OpenStreetMap data loaded and queryable
 - [x] Interactive map with OpenStreetMap and Leaflet.js
 - [x] Drag and zoom functionality
-- [x] Real-time spatial data queries
+- [x] Real-time spatial data queries via FastAPI
 - [x] Restaurant layer with toggle functionality
 - [x] Navigation bar with "SLO View" title
+- [x] Background caching with scheduled refresh
+- [x] Rate limiting compliance
+- [x] Fallback to sample data on API failure
 - [x] Google Cloud deployment infrastructure
 - [x] CI/CD pipeline with GitHub Actions
 - [x] Comprehensive testing framework

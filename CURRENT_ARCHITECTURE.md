@@ -11,7 +11,8 @@ graph TD
     C --> D[Google Cloud Run]
     D --> E[Spring Boot Backend]
     E --> F[Google Cloud Compute Engine]
-    F --> G[PostgreSQL + PostGIS Database]
+    F --> G[FastAPI + PostGIS]
+    G --> H[PostgreSQL + PostGIS Database]
     
     subgraph "Google Cloud Platform"
         B
@@ -20,26 +21,34 @@ graph TD
         E
         F
         G
+        H
     end
     
     subgraph "Frontend Components"
-        C --> H[Navigation Bar]
-        C --> I[Map Viewer]
-        I --> J[Restaurant Layer Toggle]
-        I --> K[Real-time Data Fetching]
+        C --> I[Navigation Bar]
+        C --> J[Map Viewer]
+        J --> K[Restaurant Layer Toggle]
+        J --> L[Real-time Data Fetching]
     end
     
     subgraph "Backend Components"
-        E --> L[Health Check API]
-        E --> M[Spatial Data API]
-        M --> N[OSM Point Queries]
-        M --> O[Coordinate Transformations]
+        E --> M[Health Check API]
+        E --> N[GIS API Service]
+        N --> O[WebClient HTTP Calls]
+        N --> P[Coordinate Transformations]
+        N --> Q[Background Caching]
+    end
+    
+    subgraph "FastAPI Components"
+        G --> R[Restaurant Endpoints]
+        G --> S[Rate Limiting]
+        G --> T[GeoJSON Responses]
     end
     
     subgraph "Database Components"
-        G --> P[planet_osm_point Table]
-        G --> Q[Spatial Indexes]
-        G --> R[PostGIS Extensions]
+        H --> U[planet_osm_point Table]
+        H --> V[Spatial Indexes]
+        H --> W[PostGIS Extensions]
     end
 ```
 
@@ -56,22 +65,45 @@ graph TD
   - API integration with backend for spatial queries
   - Responsive design for all screen sizes
 
-### 2. Backend Application (Spring Boot + PostGIS)
+### 2. Backend Application (Spring Boot + FastAPI Integration)
 - **Hosting**: Google Cloud Run
-- **URL**: `https://slo-view-backend-ba5fw55ysa-uw.a.run.app`
+- **URL**: `https://slo-view-backend-220847261978.us-west1.run.app`
 - **Framework**: Spring Boot 2.7.18 with Java 11
-- **Database Integration**: PostgreSQL + PostGIS via JPA/Hibernate
+- **Integration**: FastAPI calls via WebClient (no direct database access)
+- **Features**:
+  - Background caching with scheduled refresh
+  - Rate limiting compliance
+  - Coordinate transformation (Web Mercator to WGS84)
+  - Fallback to sample data on API failure
 - **API Endpoints**:
   - `GET /health` - Health check
-  - `GET /api/map/points` - Bounded spatial queries
-  - `GET /api/map/points/amenity/{amenity}` - Amenity-based queries
-  - `GET /api/map/points/amenity/{amenity}/wgs84` - WGS84 coordinate queries
-  - `GET /api/map/points/tourism/{tourism}` - Tourism-based queries
-  - `GET /api/map/points/shop/{shop}` - Shop-based queries
-  - `GET /api/map/points/search` - Name-based search
+  - `GET /api/map/points/amenity/restaurant/wgs84` - Restaurant data (working)
+  - `GET /api/map/points/amenity/{amenity}/wgs84` - Other amenities (placeholder)
+  - `GET /api/map/points` - Spatial queries (placeholder)
+  - `GET /api/map/points/tourism/{tourism}` - Tourism queries (placeholder)
+  - `GET /api/map/points/shop/{shop}` - Shop queries (placeholder)
+  - `GET /api/map/points/search` - Search queries (placeholder)
 
-### 3. Database Server (PostgreSQL + PostGIS)
+### 3. FastAPI Server (Python + PostGIS)
 - **Hosting**: Google Cloud Compute Engine VM
+- **Instance**: `slo-view-postgis-db` (e2-micro)
+- **IP Address**: 34.83.60.201
+- **Base URL**: `http://34.83.60.201`
+- **Features**:
+  - Python FastAPI application
+  - Rate limiting (1000 requests/hour per IP)
+  - GeoJSON responses
+  - Pagination support
+- **API Endpoints**:
+  - `GET /api/v1/restaurants` - Restaurant data with pagination
+  - `GET /api/v1/roads` - Road data (planned)
+  - `GET /api/v1/pois` - Points of interest (planned)
+  - `GET /api/v1/spatial` - Spatial queries (planned)
+  - `GET /api/v1/data` - Data management (planned)
+  - `GET /api/v1/admin` - Admin functions (planned)
+
+### 4. Database Server (PostgreSQL + PostGIS)
+- **Hosting**: Google Cloud Compute Engine VM (same as FastAPI)
 - **Instance**: `slo-view-postgis-db` (e2-micro)
 - **IP Address**: 34.83.60.201:5432
 - **Database**: `slo_view_db`
@@ -81,17 +113,21 @@ graph TD
   - OpenStreetMap data loaded (`planet_osm_point` table)
   - Spatial indexes for performance
   - Coordinate transformation capabilities (3857 ↔ 4326)
+  - **Access**: Only through FastAPI (no direct access from Spring Boot)
 
 ## Data Flow
 
 1. **User Interaction**: User opens the web application in their browser
 2. **Frontend Loading**: React app loads from Google Cloud Storage
 3. **Map Initialization**: Leaflet.js map initializes with OpenStreetMap tiles
-4. **Data Requests**: Frontend makes API calls to backend for spatial data
-5. **Backend Processing**: Spring Boot processes requests and queries PostGIS
-6. **Database Queries**: PostgreSQL executes spatial queries with PostGIS functions
-7. **Data Response**: Results returned as JSON with WGS84 coordinates
-8. **Map Rendering**: Frontend displays markers and features on the map
+4. **Data Requests**: Frontend makes API calls to Spring Boot backend
+5. **Backend Processing**: Spring Boot checks cache or calls FastAPI
+6. **FastAPI Processing**: FastAPI queries PostGIS database with spatial functions
+7. **Database Queries**: PostgreSQL executes spatial queries with PostGIS functions
+8. **GeoJSON Response**: FastAPI returns GeoJSON data in Web Mercator coordinates
+9. **Coordinate Transformation**: Spring Boot transforms coordinates to WGS84
+10. **JSON Response**: Spring Boot returns data in frontend-compatible format
+11. **Map Rendering**: Frontend displays markers and features on the map
 
 ## Technology Stack
 
@@ -106,9 +142,17 @@ graph TD
 - **Spring Boot**: 2.7.18
 - **Java**: 11 (LTS)
 - **Maven**: 3.6+
-- **JPA/Hibernate**: Data persistence
-- **Hibernate Spatial**: PostGIS integration
-- **JTS**: Java Topology Suite for geometry handling
+- **WebClient**: HTTP client for FastAPI calls
+- **Jackson**: JSON processing
+- **Spring Async**: Background caching
+- **Spring Scheduling**: Cache refresh
+
+### FastAPI
+- **Python**: 3.x
+- **FastAPI**: Web framework
+- **PostGIS Integration**: Direct database queries
+- **Rate Limiting**: Custom middleware
+- **GeoJSON**: Response format
 
 ### Database
 - **PostgreSQL**: 14+
@@ -125,7 +169,9 @@ graph TD
 
 ## API Documentation
 
-### Health Check
+### Spring Boot Backend APIs
+
+#### Health Check
 ```http
 GET /health
 ```
@@ -138,9 +184,9 @@ GET /health
 }
 ```
 
-### Spatial Queries
+#### Restaurant Data (Working)
 ```http
-GET /api/map/points/amenity/restaurant/wgs84
+GET /api/map/points/amenity/restaurant/wgs84?limit=20
 ```
 **Response:**
 ```json
@@ -160,41 +206,131 @@ GET /api/map/points/amenity/restaurant/wgs84
 ]
 ```
 
-### Bounded Queries
+#### Other Endpoints (Placeholder)
 ```http
+GET /api/map/points/amenity/{amenity}/wgs84
 GET /api/map/points?minLon=-120.7&minLat=35.1&maxLon=-120.5&maxLat=35.4
+GET /api/map/points/tourism/{tourism}
+GET /api/map/points/shop/{shop}
+GET /api/map/points/search?name=wine
+```
+
+### FastAPI Backend APIs
+
+#### Restaurant Data
+```http
+GET http://34.83.60.201/api/v1/restaurants?page=1&limit=20
+```
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "features": [
+      {
+        "id": "4242284693",
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [-13412345.67, 4082345.67]
+        },
+        "properties": {
+          "name": "Pres'quile Winery",
+          "type": "restaurant"
+        }
+      }
+    ],
+    "pagination": {
+      "page": 1,
+      "limit": 20,
+      "total": 150
+    }
+  }
+}
+```
+
+#### API Status
+```http
+GET http://34.83.60.201/
+```
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "api_name": "SLO GIS API",
+    "version": "1.0.0",
+    "description": "Free Tier Optimized Geospatial API",
+    "status": "operational",
+    "endpoints": {
+      "restaurants": "/api/v1/restaurants",
+      "roads": "/api/v1/roads",
+      "pois": "/api/v1/pois",
+      "spatial": "/api/v1/spatial",
+      "data": "/api/v1/data",
+      "admin": "/api/v1/admin"
+    }
+  }
+}
 ```
 
 ## Environment Configuration
 
-### Backend Environment Variables
-- `DB_HOST`: 34.83.60.201
-- `DB_PORT`: 5432
-- `DB_NAME`: slo_view_db
-- `DB_USERNAME`: slo_view_user
-- `DB_PASSWORD`: [configured in GitHub Secrets]
+### Spring Boot Backend Environment Variables
+- `GIS_API_BASE_URL`: http://34.83.60.201 (FastAPI base URL)
+- `SPRING_PROFILES_ACTIVE`: default (or production)
 
 ### Frontend Configuration
-- `REACT_APP_API_URL`: Backend API URL (auto-detected)
+- **Production**: `REACT_APP_API_URL=https://slo-view-backend-220847261978.us-west1.run.app`
+- **Local Development**: `REACT_APP_API_URL=http://localhost:8080`
+
+### FastAPI Configuration (on VM)
+- `RATE_LIMIT_PER_HOUR`: 1000 (requests per hour per IP)
+- Database connection configured internally
 
 ## Deployment Status
 
 ### ✅ Currently Deployed
 - [x] Frontend: Google Cloud Storage (static hosting)
-- [x] Backend: Google Cloud Run (containerized)
-- [x] Database: Compute Engine VM (PostgreSQL + PostGIS)
+- [x] Backend: Google Cloud Run (containerized Spring Boot)
+- [x] FastAPI: Compute Engine VM (Python + PostGIS)
+- [x] Database: PostgreSQL + PostGIS on same VM
 - [x] CI/CD: GitHub Actions pipeline
 - [x] Data: OpenStreetMap data loaded and queryable
-- [x] Integration: Full frontend-backend-database connectivity
+- [x] Integration: Full three-tier architecture working
 
 ### 🔧 Infrastructure Details
 - **Project ID**: slo-view-app
 - **Region**: us-west1 (Oregon)
 - **Frontend Bucket**: slo-view-frontend
-- **Backend Service**: slo-view-backend
-- **Database VM**: slo-view-postgis-db (us-west1-a)
+- **Backend Service**: slo-view-backend-220847261978
+- **FastAPI + Database VM**: slo-view-postgis-db (us-west1-a)
+- **VM IP**: 34.83.60.201
+
+### 🌐 Live URLs
+- **Frontend**: https://storage.googleapis.com/slo-view-frontend/index.html
+- **Backend**: https://slo-view-backend-220847261978.us-west1.run.app
+- **FastAPI**: http://34.83.60.201
 
 ## Performance Characteristics
+
+### FastAPI Performance
+- **Rate Limiting**: 1000 requests/hour per IP
+- **Response Time**: < 200ms for restaurant queries
+- **Pagination**: 20 items per page by default
+- **GeoJSON Format**: Efficient spatial data transfer
+
+### Spring Boot Performance
+- **Caching**: Background cache with hourly refresh
+- **Response Time**: < 100ms for cached data
+- **Fallback**: Sample data when API unavailable
+- **Auto-scaling**: Cloud Run scales based on demand
+
+### Frontend Performance
+- **Bundle Size**: Optimized React build
+- **Map Loading**: Efficient tile caching
+- **API Calls**: Real-time data fetching on map interactions
+- **Marker Rendering**: Efficient Leaflet.js markers
 
 ### Database Performance
 - **Spatial Indexes**: Optimized for bounding box queries
@@ -202,40 +338,38 @@ GET /api/map/points?minLon=-120.7&minLat=35.1&maxLon=-120.5&maxLat=35.4
 - **Query Response Time**: < 500ms for typical spatial queries
 - **Data Volume**: ~70KB response for restaurant queries
 
-### Frontend Performance
-- **Bundle Size**: Optimized React build
-- **Map Loading**: Efficient tile caching
-- **API Calls**: Real-time data fetching on map interactions
-
-### Backend Performance
-- **Response Time**: < 200ms for health checks
-- **Spatial Queries**: < 500ms for complex queries
-- **Auto-scaling**: Cloud Run scales based on demand
-- **Connection Pooling**: HikariCP for database connections
-
 ## Security Configuration
 
 ### Network Security
-- **Database Access**: Restricted to Cloud Run service
-- **Public Access**: Only frontend and backend APIs
+- **Database Access**: Only accessible from FastAPI on same VM
+- **FastAPI Access**: Public HTTP endpoint (no authentication in MVP)
+- **Spring Boot Access**: Public HTTPS endpoint
 - **CORS**: Configured for cross-origin requests
 
 ### Data Security
-- **Database Credentials**: Stored as environment variables
+- **Database Credentials**: Stored internally on VM
 - **API Access**: Public endpoints (no authentication in MVP)
-- **HTTPS**: All communications encrypted
+- **HTTPS**: Frontend and Spring Boot use HTTPS
+- **Rate Limiting**: FastAPI implements rate limiting per IP
 
 ## Monitoring and Observability
 
 ### Health Monitoring
-- **Backend Health**: `/health` endpoint
-- **Database Connectivity**: Monitored via application logs
+- **Spring Boot Health**: `/health` endpoint
+- **FastAPI Health**: `http://34.83.60.201/` status endpoint
+- **Database Connectivity**: Monitored via FastAPI logs
 - **Cloud Run Metrics**: Request count, latency, errors
 
 ### Logging
-- **Application Logs**: Google Cloud Logging
+- **Application Logs**: Google Cloud Logging (Spring Boot)
+- **FastAPI Logs**: VM system logs
 - **Database Logs**: PostgreSQL logs on VM
 - **Access Logs**: Cloud Storage and Cloud Run access logs
+
+### Cache Monitoring
+- **Cache Status**: Logged in Spring Boot application
+- **Cache Refresh**: Hourly scheduled task
+- **Fallback Data**: Sample data when API unavailable
 
 ## Future Enhancements
 
@@ -255,24 +389,39 @@ GET /api/map/points?minLon=-120.7&minLat=35.1&maxLon=-120.5&maxLat=35.4
 ## Troubleshooting
 
 ### Common Issues
-1. **Database Connection**: Check VM status and firewall rules
-2. **API Errors**: Verify environment variables in Cloud Run
-3. **Map Loading**: Check frontend build and deployment
-4. **CORS Issues**: Verify backend CORS configuration
+1. **FastAPI Connection**: Check VM status and FastAPI service
+2. **Rate Limiting**: Wait for rate limit reset or check FastAPI logs
+3. **Cache Issues**: Check Spring Boot cache initialization logs
+4. **Map Loading**: Check frontend build and deployment
+5. **CORS Issues**: Verify backend CORS configuration
 
 ### Debug Commands
 ```bash
-# Check backend health
-curl https://slo-view-backend-ba5fw55ysa-uw.a.run.app/health
+# Check Spring Boot health
+curl https://slo-view-backend-220847261978.us-west1.run.app/health
 
-# Test spatial API
-curl https://slo-view-backend-ba5fw55ysa-uw.a.run.app/api/map/points/amenity/restaurant/wgs84
+# Test restaurant API
+curl "https://slo-view-backend-220847261978.us-west1.run.app/api/map/points/amenity/restaurant/wgs84?limit=5"
+
+# Check FastAPI status
+curl http://34.83.60.201/
+
+# Test FastAPI directly
+curl "http://34.83.60.201/api/v1/restaurants?page=1&limit=5"
 
 # Check VM status
 gcloud compute instances list --filter="name~postgis"
 
-# View backend logs
+# View Spring Boot logs
 gcloud logs read --service slo-view-backend --limit 50
+
+# SSH to VM to check FastAPI logs
+gcloud compute ssh slo-view-postgis-db --zone=us-west1-a
 ```
+
+### Rate Limiting Issues
+- **Error**: 429 Too Many Requests
+- **Solution**: Wait for rate limit reset (1 hour) or check FastAPI configuration
+- **Prevention**: Spring Boot uses caching to minimize API calls
 
 This architecture represents the current production state of the SLO View application with full PostGIS integration and real-time spatial data capabilities.
