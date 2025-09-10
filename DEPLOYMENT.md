@@ -2,11 +2,14 @@
 
 This comprehensive guide covers everything needed to deploy the SLO View application to Google Cloud Platform, from initial setup to production deployment.
 
+**Current Architecture**: Three-tier system with React frontend, Spring Boot backend, and FastAPI + PostGIS on a VM.
+
 ## Table of Contents
 - [Prerequisites](#prerequisites)
 - [Quick Setup (Automated)](#quick-setup-automated)
 - [Manual Setup](#manual-setup)
 - [Deployment Strategy](#deployment-strategy)
+- [FastAPI + PostGIS Setup](#fastapi--postgis-setup)
 - [Monitoring & Maintenance](#monitoring--maintenance)
 - [Troubleshooting](#troubleshooting)
 
@@ -196,6 +199,7 @@ chmod +x scripts/setup-gcp-infrastructure.sh
 ### Architecture Overview
 - **Frontend**: React app hosted in Google Cloud Storage (static website)
 - **Backend**: Spring Boot API hosted in Google Cloud Run (serverless containers)
+- **FastAPI + PostGIS**: Python FastAPI with PostgreSQL on Compute Engine VM
 - **CI/CD**: GitHub Actions for automated testing and deployment
 
 ### Frontend Deployment (Google Cloud Storage)
@@ -209,23 +213,77 @@ chmod +x scripts/setup-gcp-infrastructure.sh
 - Auto-scaling based on traffic
 - Serverless with pay-per-use pricing
 - Health checks and monitoring built-in
+- **Integration**: Calls FastAPI on VM (no direct database access)
+
+### FastAPI + PostGIS Deployment (Compute Engine VM)
+- Python FastAPI application
+- PostgreSQL + PostGIS database
+- Rate limiting and monitoring
+- **Access**: Only through FastAPI (no direct database access)
 
 ### CI/CD Pipeline
 - **Frontend**: Automated build and deployment to Cloud Storage
 - **Backend**: Automated Docker build and deployment to Cloud Run
+- **FastAPI**: Manual deployment to VM (separate process)
 - **Testing**: Unit tests run before deployment
 - **Security**: Service account authentication
+
+## FastAPI + PostGIS Setup
+
+### VM Setup (Already Completed)
+The FastAPI + PostGIS setup is already deployed on the VM at `34.83.60.201`. This section documents the setup for reference.
+
+### VM Configuration
+- **Instance**: `slo-view-postgis-db` (e2-micro)
+- **Zone**: us-west1-a
+- **IP Address**: 34.83.60.201
+- **OS**: Debian 12
+
+### FastAPI Application
+- **Base URL**: `http://34.83.60.201`
+- **Rate Limiting**: 1000 requests/hour per IP
+- **Endpoints**:
+  - `GET /` - API status
+  - `GET /api/v1/restaurants` - Restaurant data with pagination
+  - `GET /api/v1/roads` - Road data (planned)
+  - `GET /api/v1/pois` - Points of interest (planned)
+
+### Database Configuration
+- **PostgreSQL**: 14+ with PostGIS extensions
+- **Database**: `slo_view_db`
+- **User**: `slo_view_user`
+- **Data**: OpenStreetMap data for San Luis Obispo County
+
+### Rate Limiting Configuration
+The FastAPI implements rate limiting to prevent abuse:
+- **Limit**: 1000 requests per hour per IP address
+- **Configuration**: `/opt/slo-gis/api/app/core/config.py`
+- **Reset**: Automatic reset every hour
+
+### Monitoring FastAPI
+```bash
+# Check FastAPI status
+curl http://34.83.60.201/
+
+# Test restaurant endpoint
+curl "http://34.83.60.201/api/v1/restaurants?page=1&limit=5"
+
+# SSH to VM for logs
+gcloud compute ssh slo-view-postgis-db --zone=us-west1-a
+```
 
 ## Monitoring & Maintenance
 
 ### Health Checks
 ```bash
-# Test backend health
-SERVICE_URL=$(gcloud run services describe slo-view-backend \
-    --platform managed \
-    --region us-west1 \
-    --format 'value(status.url)')
-curl $SERVICE_URL/health
+# Test Spring Boot backend health
+curl https://slo-view-backend-220847261978.us-west1.run.app/health
+
+# Test FastAPI health
+curl http://34.83.60.201/
+
+# Test restaurant API
+curl "https://slo-view-backend-220847261978.us-west1.run.app/api/map/points/amenity/restaurant/wgs84?limit=5"
 
 # Test frontend
 curl -I https://storage.googleapis.com/slo-view-frontend/index.html
@@ -233,14 +291,20 @@ curl -I https://storage.googleapis.com/slo-view-frontend/index.html
 
 ### Monitoring Commands
 ```bash
-# View service logs
+# View Spring Boot service logs
 gcloud logs read --service slo-view-backend --limit 50
 
-# Check service status
+# Check Cloud Run service status
 gcloud run services list
 
-# View bucket contents
+# View frontend bucket contents
 gsutil ls -la gs://slo-view-frontend
+
+# Check VM status
+gcloud compute instances list --filter="name~postgis"
+
+# SSH to VM to check FastAPI logs
+gcloud compute ssh slo-view-postgis-db --zone=us-west1-a
 ```
 
 ### Cost Optimization
@@ -280,6 +344,21 @@ gsutil ls -la gs://slo-view-frontend
    - Check Cloud Run service limits
    - Verify environment variables
    - Review GitHub Actions logs
+
+6. **FastAPI connection issues:**
+   - Check VM status: `gcloud compute instances list --filter="name~postgis"`
+   - Test FastAPI: `curl http://34.83.60.201/`
+   - Check rate limiting: Look for 429 errors in logs
+
+7. **Rate limiting (429 errors):**
+   - Wait for rate limit reset (1 hour)
+   - Check FastAPI configuration on VM
+   - Spring Boot should use caching to minimize calls
+
+8. **Cache issues:**
+   - Check Spring Boot logs for cache initialization
+   - Verify FastAPI connectivity
+   - Fallback to sample data should work
 
 ### Getting Help
 1. Check Google Cloud Console logs

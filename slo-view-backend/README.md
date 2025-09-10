@@ -1,12 +1,14 @@
 # SLO View Backend
 
-A Spring Boot REST API backend for the SLO View application, providing health check endpoints and serving as the foundation for future API functionality.
+A Spring Boot REST API backend for the SLO View application, providing health check endpoints and GIS data integration via FastAPI.
 
 ## Overview
 
-The SLO View Backend is a minimal Spring Boot application that provides:
+The SLO View Backend is a Spring Boot application that provides:
 - Health check endpoint at `/health`
-- RESTful API structure for future expansion
+- GIS data API endpoints with FastAPI integration
+- Background caching with scheduled refresh
+- Rate limiting compliance and fallback data
 - Containerized deployment ready for Google Cloud Run
 
 ## Technology Stack
@@ -14,6 +16,10 @@ The SLO View Backend is a minimal Spring Boot application that provides:
 - **Framework**: Spring Boot 2.7.18
 - **Java Version**: 11
 - **Build Tool**: Maven
+- **HTTP Client**: WebClient (Spring WebFlux)
+- **JSON Processing**: Jackson
+- **Caching**: Spring Async + Scheduled tasks
+- **Integration**: FastAPI calls (no direct database access)
 - **Containerization**: Docker
 - **Testing**: JUnit 5, MockMvc
 
@@ -30,6 +36,19 @@ The SLO View Backend is a minimal Spring Boot application that provides:
     "timestamp": "1234567890123"
   }
   ```
+
+### GIS Data Endpoints
+- **Endpoint**: `GET /api/map/points/amenity/restaurant/wgs84`
+- **Description**: Returns restaurant data from FastAPI
+- **Parameters**: `limit` (optional) - Maximum number of restaurants
+- **Response**: Array of restaurant objects with WGS84 coordinates
+
+### Other Endpoints (Placeholder)
+- `GET /api/map/points/amenity/{amenity}/wgs84` - Other amenity types
+- `GET /api/map/points` - Spatial queries
+- `GET /api/map/points/tourism/{tourism}` - Tourism queries
+- `GET /api/map/points/shop/{shop}` - Shop queries
+- `GET /api/map/points/search` - Search queries
 
 ## Development Setup
 

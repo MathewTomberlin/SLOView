@@ -5,7 +5,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.web.servlet.MockMvc;
-import com.sloview.repository.OSMPointRepository;
+import com.sloview.service.GISApiService;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -22,7 +22,7 @@ class HealthControllerTest {
     private MockMvc mockMvc;
 
     @MockBean
-    private OSMPointRepository osmPointRepository;
+    private GISApiService gisApiService;
 
     /**
      * Test that the health endpoint returns a successful response with correct status.
