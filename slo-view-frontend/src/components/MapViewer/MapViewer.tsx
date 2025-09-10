@@ -41,8 +41,8 @@ const MapViewer: React.FC = () => {
   const [restaurants, setRestaurants] = useState<OSMPoint[]>([]);
   const [showRestaurants, setShowRestaurants] = useState(false);
   const [loading] = useState(false);
-  const [restaurantMarkers, setRestaurantMarkers] = useState<L.Marker[]>([]);
-  const [featureMarkers, setFeatureMarkers] = useState<L.Marker[]>([]);
+  const restaurantMarkersRef = useRef<L.Marker[]>([]);
+  const featureMarkersRef = useRef<L.Marker[]>([]);
 
   // const fetchMapFeatures = async (bounds: L.LatLngBounds) => {
   //   try {
@@ -164,7 +164,7 @@ const MapViewer: React.FC = () => {
   useEffect(() => {
     if (mapInstanceRef.current && features.length > 0) {
       // Clear existing feature markers
-      featureMarkers.forEach(marker => {
+      featureMarkersRef.current.forEach(marker => {
         mapInstanceRef.current?.removeLayer(marker);
       });
 
@@ -190,7 +190,9 @@ const MapViewer: React.FC = () => {
           newFeatureMarkers.push(marker);
         }
       });
-      setFeatureMarkers(newFeatureMarkers);
+      featureMarkersRef.current = newFeatureMarkers;
+    } else {
+      featureMarkersRef.current = [];
     }
   }, [features]);
 
@@ -214,13 +216,13 @@ const MapViewer: React.FC = () => {
           newRestaurantMarkers.push(marker);
         }
       });
-      setRestaurantMarkers(newRestaurantMarkers);
+      restaurantMarkersRef.current = newRestaurantMarkers;
     } else {
       // Remove restaurant markers
-      restaurantMarkers.forEach(marker => {
+      restaurantMarkersRef.current.forEach(marker => {
         mapInstanceRef.current?.removeLayer(marker);
       });
-      setRestaurantMarkers([]);
+      restaurantMarkersRef.current = [];
     }
   }, [showRestaurants, restaurants]);
 
@@ -228,10 +230,10 @@ const MapViewer: React.FC = () => {
   useEffect(() => {
     return () => {
       if (mapInstanceRef.current) {
-        featureMarkers.forEach(marker => {
+        featureMarkersRef.current.forEach(marker => {
           mapInstanceRef.current?.removeLayer(marker);
         });
-        restaurantMarkers.forEach(marker => {
+        restaurantMarkersRef.current.forEach(marker => {
           mapInstanceRef.current?.removeLayer(marker);
         });
       }
