@@ -107,9 +107,12 @@ class MapDataControllerTest {
         mockRoad.put("latitude", 35.2828);
         mockRoad.put("geometry", "LineString");
         
-        when(gisApiService.getRoads(any())).thenReturn(List.of(mockRoad));
+        when(gisApiService.findNearbyFeatures(anyDouble(), anyDouble(), anyDouble(), anyString(), anyInt()))
+                .thenReturn(List.of(mockRoad));
 
-        mockMvc.perform(get("/api/map/roads"))
+        mockMvc.perform(get("/api/map/roads")
+                .param("lon", "-120.6596")
+                .param("lat", "35.2828"))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType("application/json"))
                 .andExpect(jsonPath("$").isArray())
@@ -129,9 +132,13 @@ class MapDataControllerTest {
     @Test
     void getRoads_WithLimit_ShouldPassLimitToService() throws Exception {
         // Mock the GIS API service response
-        when(gisApiService.getRoads(10)).thenReturn(List.of());
+        when(gisApiService.findNearbyFeatures(anyDouble(), anyDouble(), anyDouble(), anyString(), anyInt()))
+                .thenReturn(List.of());
 
-        mockMvc.perform(get("/api/map/roads?limit=10"))
+        mockMvc.perform(get("/api/map/roads")
+                .param("lon", "-120.6596")
+                .param("lat", "35.2828")
+                .param("limit", "10"))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType("application/json"))
                 .andExpect(jsonPath("$").isArray());
@@ -153,9 +160,12 @@ class MapDataControllerTest {
         mockPOI.put("latitude", 35.2828);
         mockPOI.put("geometry", "Point");
         
-        when(gisApiService.getPOIs(any())).thenReturn(List.of(mockPOI));
+        when(gisApiService.findNearbyFeatures(anyDouble(), anyDouble(), anyDouble(), anyString(), anyInt()))
+                .thenReturn(List.of(mockPOI));
 
-        mockMvc.perform(get("/api/map/pois"))
+        mockMvc.perform(get("/api/map/pois")
+                .param("lon", "-120.6596")
+                .param("lat", "35.2828"))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType("application/json"))
                 .andExpect(jsonPath("$").isArray())
@@ -175,9 +185,13 @@ class MapDataControllerTest {
     @Test
     void getPOIs_WithLimit_ShouldPassLimitToService() throws Exception {
         // Mock the GIS API service response
-        when(gisApiService.getPOIs(15)).thenReturn(List.of());
+        when(gisApiService.findNearbyFeatures(anyDouble(), anyDouble(), anyDouble(), anyString(), anyInt()))
+                .thenReturn(List.of());
 
-        mockMvc.perform(get("/api/map/pois?limit=15"))
+        mockMvc.perform(get("/api/map/pois")
+                .param("lon", "-120.6596")
+                .param("lat", "35.2828")
+                .param("limit", "15"))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType("application/json"))
                 .andExpect(jsonPath("$").isArray());
