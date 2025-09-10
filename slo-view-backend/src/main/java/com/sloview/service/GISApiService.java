@@ -290,7 +290,7 @@ public class GISApiService {
             Thread.sleep(1000);
             
             // Use a reasonable default limit if none specified
-            int effectiveLimit = limit != null ? limit : 50;
+            int effectiveLimit = limit != null ? limit : 200;
             String url = gisApiBaseUrl + "/api/v1/spatial/optimized/nearby" +
                     "?lon=" + lon + "&lat=" + lat + "&distance=" + distance + 
                     "&table=" + table + "&limit=" + effectiveLimit;
