@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import './MapViewer.css';
@@ -88,7 +88,7 @@ const MapViewer: React.FC = () => {
   //   }
   // };
 
-  const fetchLayerData = async (layerType: string, lat?: number, lon?: number, radius?: number) => {
+  const fetchLayerData = useCallback(async (layerType: string, lat?: number, lon?: number, radius?: number) => {
     try {
       const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:8080';
       // Use the provided coordinates or fall back to current center position
@@ -135,7 +135,7 @@ const MapViewer: React.FC = () => {
     } catch (error) {
       console.error(`Error fetching ${layerType}:`, error);
     }
-  };
+  }, [centerPosition, searchRadius]);
 
   useEffect(() => {
     // Initialize the map
