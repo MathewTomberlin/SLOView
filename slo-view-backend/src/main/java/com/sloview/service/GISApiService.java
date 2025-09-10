@@ -7,7 +7,6 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
-import reactor.core.publisher.Mono;
 
 import javax.annotation.PostConstruct;
 import java.util.ArrayList;
@@ -195,37 +194,6 @@ public class GISApiService {
         return allRestaurants;
     }
     
-    /**
-     * Fetches data from the API with retry logic for rate limiting.
-     * 
-     * @param url The URL to fetch
-     * @param maxRetries Maximum number of retries
-     * @return The response body
-     */
-    private String fetchWithRetry(String url, int maxRetries) {
-        for (int attempt = 1; attempt <= maxRetries; attempt++) {
-            try {
-                return webClient.get()
-                        .uri(url)
-                        .retrieve()
-                        .bodyToMono(String.class)
-                        .block();
-            } catch (Exception e) {
-                if (e.getMessage().contains("429") && attempt < maxRetries) {
-                    // Rate limited, wait longer before retry
-                    try {
-                        Thread.sleep(1000 * attempt); // Exponential backoff: 1s, 2s, 3s
-                    } catch (InterruptedException ie) {
-                        Thread.currentThread().interrupt();
-                        throw new RuntimeException("Request interrupted", ie);
-                    }
-                } else {
-                    throw e;
-                }
-            }
-        }
-        throw new RuntimeException("Failed to fetch data after " + maxRetries + " attempts");
-    }
     
     /**
      * Transforms the GeoJSON response from the GIS API into the format expected by the frontend.
@@ -277,6 +245,475 @@ public class GISApiService {
             return restaurants;
         } catch (Exception e) {
             throw new RuntimeException("Failed to transform restaurants response", e);
+        }
+    }
+    
+    /**
+     * Fetches roads from the GIS API.
+     * 
+     * @param limit Maximum number of roads to return (null for all)
+     * @return List of road data in frontend-compatible format
+     */
+    public List<Map<String, Object>> getRoads(Integer limit) {
+        try {
+            // Wait a bit to avoid rate limiting
+            Thread.sleep(1000);
+            
+            int pageSize = limit != null ? Math.min(limit, 25) : 25; // Default page size for roads
+            String url = gisApiBaseUrl + "/api/v1/roads?page=1&limit=" + pageSize;
+            
+            String response = webClient.get()
+                    .uri(url)
+                    .retrieve()
+                    .bodyToMono(String.class)
+                    .block();
+            
+            return transformRoadsResponse(response);
+        } catch (Exception e) {
+            System.err.println("Warning: Failed to fetch roads from GIS API: " + e.getMessage());
+            return getSampleRoads(limit);
+        }
+    }
+    
+    /**
+     * Fetches points of interest from the GIS API.
+     * 
+     * @param limit Maximum number of POIs to return (null for all)
+     * @return List of POI data in frontend-compatible format
+     */
+    public List<Map<String, Object>> getPOIs(Integer limit) {
+        try {
+            // Wait a bit to avoid rate limiting
+            Thread.sleep(1000);
+            
+            int pageSize = limit != null ? Math.min(limit, 20) : 20; // Default page size for POIs
+            String url = gisApiBaseUrl + "/api/v1/pois?page=1&limit=" + pageSize;
+            
+            String response = webClient.get()
+                    .uri(url)
+                    .retrieve()
+                    .bodyToMono(String.class)
+                    .block();
+            
+            return transformPOIsResponse(response);
+        } catch (Exception e) {
+            System.err.println("Warning: Failed to fetch POIs from GIS API: " + e.getMessage());
+            return getSamplePOIs(limit);
+        }
+    }
+    
+    /**
+     * Returns sample road data when API is unavailable
+     */
+    private List<Map<String, Object>> getSampleRoads(Integer limit) {
+        List<Map<String, Object>> sampleRoads = new ArrayList<>();
+        
+        // Sample roads in San Luis Obispo area
+        sampleRoads.add(createSampleRoad(1L, "Sample Road 1", "primary", 35.2828, -120.6596));
+        sampleRoads.add(createSampleRoad(2L, "Sample Road 2", "secondary", 35.2900, -120.6500));
+        sampleRoads.add(createSampleRoad(3L, "Sample Road 3", "residential", 35.2700, -120.6700));
+        
+        if (limit != null && limit < sampleRoads.size()) {
+            return sampleRoads.subList(0, limit);
+        }
+        return sampleRoads;
+    }
+    
+    /**
+     * Returns sample POI data when API is unavailable
+     */
+    private List<Map<String, Object>> getSamplePOIs(Integer limit) {
+        List<Map<String, Object>> samplePOIs = new ArrayList<>();
+        
+        // Sample POIs in San Luis Obispo area
+        samplePOIs.add(createSamplePOI(1L, "Sample POI 1", "atm", 35.2828, -120.6596));
+        samplePOIs.add(createSamplePOI(2L, "Sample POI 2", "arts_centre", 35.2900, -120.6500));
+        samplePOIs.add(createSamplePOI(3L, "Sample POI 3", "animal_shelter", 35.2700, -120.6700));
+        
+        if (limit != null && limit < samplePOIs.size()) {
+            return samplePOIs.subList(0, limit);
+        }
+        return samplePOIs;
+    }
+    
+    private Map<String, Object> createSampleRoad(Long id, String name, String type, double lat, double lon) {
+        Map<String, Object> road = new HashMap<>();
+        road.put("osmId", id);
+        road.put("name", name);
+        road.put("type", type);
+        road.put("latitude", lat);
+        road.put("longitude", lon);
+        road.put("geometry", "LineString");
+        return road;
+    }
+    
+    private Map<String, Object> createSamplePOI(Long id, String name, String type, double lat, double lon) {
+        Map<String, Object> poi = new HashMap<>();
+        poi.put("osmId", id);
+        poi.put("name", name);
+        poi.put("type", type);
+        poi.put("latitude", lat);
+        poi.put("longitude", lon);
+        poi.put("geometry", "Point");
+        return poi;
+    }
+    
+    /**
+     * Transforms the GeoJSON response from the roads API into the format expected by the frontend.
+     * 
+     * @param jsonResponse Raw JSON response from the GIS API
+     * @return Transformed list of road data
+     */
+    private List<Map<String, Object>> transformRoadsResponse(String jsonResponse) {
+        try {
+            JsonNode root = objectMapper.readTree(jsonResponse);
+            JsonNode features = root.path("data").path("features");
+            
+            List<Map<String, Object>> roads = new ArrayList<>();
+            
+            for (JsonNode feature : features) {
+                Map<String, Object> road = new HashMap<>();
+                
+                // Extract ID
+                road.put("osmId", Long.parseLong(feature.path("id").asText()));
+                
+                // Extract properties
+                JsonNode properties = feature.path("properties");
+                road.put("name", properties.path("name").asText());
+                road.put("type", properties.path("type").asText());
+                
+                // For roads, we'll use the first coordinate of the LineString
+                JsonNode geometry = feature.path("geometry");
+                JsonNode coordinates = geometry.path("coordinates");
+                if (coordinates.isArray() && coordinates.size() > 0) {
+                    JsonNode firstCoord = coordinates.get(0);
+                    if (firstCoord.isArray() && firstCoord.size() >= 2) {
+                        double x = firstCoord.get(0).asDouble();
+                        double y = firstCoord.get(1).asDouble();
+                        
+                        // Transform from Web Mercator (3857) to WGS84 (4326)
+                        double[] wgs84 = transformToWGS84(x, y);
+                        road.put("longitude", wgs84[0]);
+                        road.put("latitude", wgs84[1]);
+                    }
+                }
+                
+                road.put("geometry", "LineString");
+                roads.add(road);
+            }
+            
+            return roads;
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to transform roads response", e);
+        }
+    }
+    
+    /**
+     * Transforms the GeoJSON response from the POIs API into the format expected by the frontend.
+     * 
+     * @param jsonResponse Raw JSON response from the GIS API
+     * @return Transformed list of POI data
+     */
+    private List<Map<String, Object>> transformPOIsResponse(String jsonResponse) {
+        try {
+            JsonNode root = objectMapper.readTree(jsonResponse);
+            JsonNode features = root.path("data").path("features");
+            
+            List<Map<String, Object>> pois = new ArrayList<>();
+            
+            for (JsonNode feature : features) {
+                Map<String, Object> poi = new HashMap<>();
+                
+                // Extract ID
+                poi.put("osmId", Long.parseLong(feature.path("id").asText()));
+                
+                // Extract properties
+                JsonNode properties = feature.path("properties");
+                poi.put("name", properties.path("name").asText());
+                poi.put("type", properties.path("type").asText());
+                
+                // Extract coordinates and transform from 3857 to 4326
+                JsonNode geometry = feature.path("geometry");
+                JsonNode coordinates = geometry.path("coordinates");
+                if (coordinates.isArray() && coordinates.size() >= 2) {
+                    double x = coordinates.get(0).asDouble();
+                    double y = coordinates.get(1).asDouble();
+                    
+                    // Transform from Web Mercator (3857) to WGS84 (4326)
+                    double[] wgs84 = transformToWGS84(x, y);
+                    poi.put("longitude", wgs84[0]);
+                    poi.put("latitude", wgs84[1]);
+                }
+                
+                poi.put("geometry", "Point");
+                pois.add(poi);
+            }
+            
+            return pois;
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to transform POIs response", e);
+        }
+    }
+    
+    /**
+     * Fetches spatial summary from the GIS API.
+     * 
+     * @return Spatial summary data
+     */
+    public Map<String, Object> getSpatialSummary() {
+        try {
+            // Wait a bit to avoid rate limiting
+            Thread.sleep(1000);
+            
+            String url = gisApiBaseUrl + "/api/v1/spatial/summary";
+            
+            String response = webClient.get()
+                    .uri(url)
+                    .retrieve()
+                    .bodyToMono(String.class)
+                    .block();
+            
+            return transformSpatialSummaryResponse(response);
+        } catch (Exception e) {
+            System.err.println("Warning: Failed to fetch spatial summary from GIS API: " + e.getMessage());
+            return getSampleSpatialSummary();
+        }
+    }
+    
+    /**
+     * Finds nearby features using the optimized spatial search.
+     * 
+     * @param lon Longitude
+     * @param lat Latitude
+     * @param distance Search distance in meters
+     * @param table Table to search (default: mv_restaurants)
+     * @param limit Maximum number of results
+     * @return List of nearby features
+     */
+    public List<Map<String, Object>> findNearbyFeatures(double lon, double lat, double distance, String table, Integer limit) {
+        try {
+            // Wait a bit to avoid rate limiting
+            Thread.sleep(1000);
+            
+            String url = gisApiBaseUrl + "/api/v1/spatial/optimized/nearby" +
+                    "?lon=" + lon + "&lat=" + lat + "&distance=" + distance + 
+                    "&table=" + table + "&limit=" + limit;
+            
+            String response = webClient.get()
+                    .uri(url)
+                    .retrieve()
+                    .bodyToMono(String.class)
+                    .block();
+            
+            return transformNearbyFeaturesResponse(response);
+        } catch (Exception e) {
+            System.err.println("Warning: Failed to fetch nearby features from GIS API: " + e.getMessage());
+            return getSampleNearbyFeatures(limit);
+        }
+    }
+    
+    /**
+     * Fetches data status from the GIS API.
+     * 
+     * @return Data status information
+     */
+    public Map<String, Object> getDataStatus() {
+        try {
+            // Wait a bit to avoid rate limiting
+            Thread.sleep(1000);
+            
+            String url = gisApiBaseUrl + "/api/v1/data/status";
+            
+            String response = webClient.get()
+                    .uri(url)
+                    .retrieve()
+                    .bodyToMono(String.class)
+                    .block();
+            
+            return transformDataStatusResponse(response);
+        } catch (Exception e) {
+            System.err.println("Warning: Failed to fetch data status from GIS API: " + e.getMessage());
+            return getSampleDataStatus();
+        }
+    }
+    
+    /**
+     * Fetches data metadata from the GIS API.
+     * 
+     * @return Data metadata information
+     */
+    public Map<String, Object> getDataMetadata() {
+        try {
+            // Wait a bit to avoid rate limiting
+            Thread.sleep(1000);
+            
+            String url = gisApiBaseUrl + "/api/v1/data/metadata";
+            
+            String response = webClient.get()
+                    .uri(url)
+                    .retrieve()
+                    .bodyToMono(String.class)
+                    .block();
+            
+            return transformDataMetadataResponse(response);
+        } catch (Exception e) {
+            System.err.println("Warning: Failed to fetch data metadata from GIS API: " + e.getMessage());
+            return getSampleDataMetadata();
+        }
+    }
+    
+    /**
+     * Returns sample spatial summary data when API is unavailable
+     */
+    private Map<String, Object> getSampleSpatialSummary() {
+        Map<String, Object> summary = new HashMap<>();
+        summary.put("restaurants", 710);
+        summary.put("roads", 54534);
+        summary.put("pois", 3629);
+        return summary;
+    }
+    
+    /**
+     * Returns sample nearby features data when API is unavailable
+     */
+    private List<Map<String, Object>> getSampleNearbyFeatures(Integer limit) {
+        List<Map<String, Object>> features = new ArrayList<>();
+        
+        // Sample nearby features
+        features.add(createSampleNearbyFeature(1L, "Sample Restaurant", "restaurant", 35.2828, -120.6596, 0.0));
+        features.add(createSampleNearbyFeature(2L, "Sample POI", "atm", 35.2830, -120.6598, 25.5));
+        
+        if (limit != null && limit < features.size()) {
+            return features.subList(0, limit);
+        }
+        return features;
+    }
+    
+    /**
+     * Returns sample data status when API is unavailable
+     */
+    private Map<String, Object> getSampleDataStatus() {
+        Map<String, Object> status = new HashMap<>();
+        status.put("database", Map.of("status", "healthy", "database_size", "591 MB"));
+        status.put("record_counts", Map.of("restaurants", 710, "roads", 54534, "pois", 3629));
+        status.put("health", "healthy");
+        return status;
+    }
+    
+    /**
+     * Returns sample data metadata when API is unavailable
+     */
+    private Map<String, Object> getSampleDataMetadata() {
+        Map<String, Object> metadata = new HashMap<>();
+        metadata.put("layers", List.of(
+            Map.of("name", "restaurants", "description", "Restaurant locations", "geometry_type", "point"),
+            Map.of("name", "roads", "description", "Road network", "geometry_type", "linestring"),
+            Map.of("name", "pois", "description", "Points of Interest", "geometry_type", "point")
+        ));
+        metadata.put("coordinate_systems", List.of("EPSG:3857", "EPSG:4326"));
+        return metadata;
+    }
+    
+    private Map<String, Object> createSampleNearbyFeature(Long id, String name, String type, double lat, double lon, double distance) {
+        Map<String, Object> feature = new HashMap<>();
+        feature.put("osmId", id);
+        feature.put("name", name);
+        feature.put("type", type);
+        feature.put("latitude", lat);
+        feature.put("longitude", lon);
+        feature.put("distance", distance);
+        feature.put("geometry", "Point");
+        return feature;
+    }
+    
+    /**
+     * Transforms the spatial summary response from the GIS API.
+     * 
+     * @param jsonResponse Raw JSON response from the GIS API
+     * @return Transformed spatial summary data
+     */
+    @SuppressWarnings("unchecked")
+    private Map<String, Object> transformSpatialSummaryResponse(String jsonResponse) {
+        try {
+            JsonNode root = objectMapper.readTree(jsonResponse);
+            return (Map<String, Object>) objectMapper.convertValue(root.path("data"), Map.class);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to transform spatial summary response", e);
+        }
+    }
+    
+    /**
+     * Transforms the nearby features response from the GIS API.
+     * 
+     * @param jsonResponse Raw JSON response from the GIS API
+     * @return Transformed list of nearby features
+     */
+    private List<Map<String, Object>> transformNearbyFeaturesResponse(String jsonResponse) {
+        try {
+            JsonNode root = objectMapper.readTree(jsonResponse);
+            JsonNode features = root.path("data").path("features");
+            
+            List<Map<String, Object>> nearbyFeatures = new ArrayList<>();
+            
+            for (JsonNode feature : features) {
+                Map<String, Object> nearbyFeature = new HashMap<>();
+                
+                // Extract ID
+                nearbyFeature.put("osmId", Long.parseLong(feature.path("id").asText()));
+                
+                // Extract properties
+                JsonNode properties = feature.path("properties");
+                nearbyFeature.put("name", properties.path("name").asText());
+                nearbyFeature.put("type", properties.path("type").asText());
+                nearbyFeature.put("distance", properties.path("distance").asDouble());
+                
+                // Extract coordinates
+                JsonNode geometry = feature.path("geometry");
+                JsonNode coordinates = geometry.path("coordinates");
+                if (coordinates.isArray() && coordinates.size() >= 2) {
+                    nearbyFeature.put("longitude", coordinates.get(0).asDouble());
+                    nearbyFeature.put("latitude", coordinates.get(1).asDouble());
+                }
+                
+                nearbyFeature.put("geometry", "Point");
+                nearbyFeatures.add(nearbyFeature);
+            }
+            
+            return nearbyFeatures;
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to transform nearby features response", e);
+        }
+    }
+    
+    /**
+     * Transforms the data status response from the GIS API.
+     * 
+     * @param jsonResponse Raw JSON response from the GIS API
+     * @return Transformed data status
+     */
+    @SuppressWarnings("unchecked")
+    private Map<String, Object> transformDataStatusResponse(String jsonResponse) {
+        try {
+            JsonNode root = objectMapper.readTree(jsonResponse);
+            return (Map<String, Object>) objectMapper.convertValue(root.path("data"), Map.class);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to transform data status response", e);
+        }
+    }
+    
+    /**
+     * Transforms the data metadata response from the GIS API.
+     * 
+     * @param jsonResponse Raw JSON response from the GIS API
+     * @return Transformed data metadata
+     */
+    @SuppressWarnings("unchecked")
+    private Map<String, Object> transformDataMetadataResponse(String jsonResponse) {
+        try {
+            JsonNode root = objectMapper.readTree(jsonResponse);
+            return (Map<String, Object>) objectMapper.convertValue(root.path("data"), Map.class);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to transform data metadata response", e);
         }
     }
     

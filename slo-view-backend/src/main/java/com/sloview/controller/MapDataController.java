@@ -70,4 +70,65 @@ public class MapDataController {
         // TODO: Implement when search endpoint is available
         return ResponseEntity.ok(List.of());
     }
+    
+    /**
+     * Get roads from the GIS API.
+     */
+    @GetMapping("/roads")
+    public ResponseEntity<List<Map<String, Object>>> getRoads(
+            @RequestParam(required = false) Integer limit) {
+        List<Map<String, Object>> roads = gisApiService.getRoads(limit);
+        return ResponseEntity.ok(roads);
+    }
+    
+    /**
+     * Get points of interest from the GIS API.
+     */
+    @GetMapping("/pois")
+    public ResponseEntity<List<Map<String, Object>>> getPOIs(
+            @RequestParam(required = false) Integer limit) {
+        List<Map<String, Object>> pois = gisApiService.getPOIs(limit);
+        return ResponseEntity.ok(pois);
+    }
+    
+    /**
+     * Get spatial summary statistics from the GIS API.
+     */
+    @GetMapping("/spatial/summary")
+    public ResponseEntity<Map<String, Object>> getSpatialSummary() {
+        Map<String, Object> summary = gisApiService.getSpatialSummary();
+        return ResponseEntity.ok(summary);
+    }
+    
+    /**
+     * Find nearby features using optimized spatial search.
+     */
+    @GetMapping("/spatial/nearby")
+    public ResponseEntity<List<Map<String, Object>>> findNearbyFeatures(
+            @RequestParam double lon,
+            @RequestParam double lat,
+            @RequestParam(required = false, defaultValue = "1000") double distance,
+            @RequestParam(required = false, defaultValue = "mv_restaurants") String table,
+            @RequestParam(required = false, defaultValue = "20") Integer limit) {
+        List<Map<String, Object>> features = gisApiService.findNearbyFeatures(lon, lat, distance, table, limit);
+        return ResponseEntity.ok(features);
+    }
+    
+    /**
+     * Get data status and health information from the GIS API.
+     */
+    @GetMapping("/data/status")
+    public ResponseEntity<Map<String, Object>> getDataStatus() {
+        Map<String, Object> status = gisApiService.getDataStatus();
+        return ResponseEntity.ok(status);
+    }
+    
+    /**
+     * Get data metadata and schema information from the GIS API.
+     */
+    @GetMapping("/data/metadata")
+    public ResponseEntity<Map<String, Object>> getDataMetadata() {
+        Map<String, Object> metadata = gisApiService.getDataMetadata();
+        return ResponseEntity.ok(metadata);
+    }
 }
