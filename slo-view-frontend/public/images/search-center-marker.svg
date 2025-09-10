@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 25 41" width="25" height="41">
+  <!-- Marker body -->
+  <path d="M12.5 0C5.6 0 0 5.6 0 12.5c0 12.5 12.5 28.5 12.5 28.5s12.5-16 12.5-28.5C25 5.6 19.4 0 12.5 0z" fill="#e74c3c"/>
+  
+  <!-- Marker border -->
+  <path d="M12.5 0C5.6 0 0 5.6 0 12.5c0 12.5 12.5 28.5 12.5 28.5s12.5-16 12.5-28.5C25 5.6 19.4 0 12.5 0z" fill="none" stroke="#ffffff" stroke-width="2"/>
+  
+  <!-- Search icon background -->
+  <circle cx="12.5" cy="12.5" r="8" fill="#ffffff" opacity="0.9"/>
+  
+  <!-- Search icon (crosshair/target) -->
+  <circle cx="12.5" cy="12.5" r="6" fill="none" stroke="#e74c3c" stroke-width="2"/>
+  <line x1="12.5" y1="6.5" x2="12.5" y2="18.5" stroke="#e74c3c" stroke-width="2"/>
+  <line x1="6.5" y1="12.5" x2="18.5" y2="12.5" stroke="#e74c3c" stroke-width="2"/>
+</svg>

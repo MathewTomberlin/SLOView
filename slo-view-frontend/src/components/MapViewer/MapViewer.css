@@ -86,6 +86,123 @@
   display: block;
 }
 
+/* Radio button styling */
+.radio-group {
+  margin-bottom: 15px;
+}
+
+.radio-label {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  font-size: 14px;
+  color: #2c3e50;
+  margin-bottom: 8px;
+  position: relative;
+  padding-left: 30px;
+}
+
+.radio-label input[type="radio"] {
+  position: absolute;
+  opacity: 0;
+  cursor: pointer;
+  height: 0;
+  width: 0;
+}
+
+.radio-mark {
+  position: absolute;
+  left: 0;
+  top: 2px;
+  height: 18px;
+  width: 18px;
+  background-color: #fff;
+  border: 2px solid #ddd;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+}
+
+.radio-label:hover .radio-mark {
+  border-color: #3498db;
+}
+
+.radio-label input:checked ~ .radio-mark {
+  background-color: #3498db;
+  border-color: #3498db;
+}
+
+.radio-mark:after {
+  content: "";
+  position: absolute;
+  display: none;
+  left: 5px;
+  top: 5px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: white;
+}
+
+.radio-label input:checked ~ .radio-mark:after {
+  display: block;
+}
+
+/* Radius control styling */
+.radius-control {
+  margin-top: 15px;
+  padding-top: 15px;
+  border-top: 1px solid #e0e0e0;
+}
+
+.radius-label {
+  display: block;
+  font-size: 14px;
+  color: #2c3e50;
+  margin-bottom: 8px;
+  font-weight: 500;
+}
+
+.radius-slider {
+  width: 100%;
+  height: 6px;
+  border-radius: 3px;
+  background: #e0e0e0;
+  outline: none;
+  -webkit-appearance: none;
+  appearance: none;
+  margin-bottom: 5px;
+}
+
+.radius-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #3498db;
+  cursor: pointer;
+  border: 2px solid #fff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.radius-slider::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #3498db;
+  cursor: pointer;
+  border: 2px solid #fff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.radius-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: #666;
+  margin-top: 5px;
+}
+
 .map-container {
   width: 100%;
   height: 100%;
@@ -177,6 +294,46 @@
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
 }
+
+/* Search center marker styling */
+.leaflet-marker-icon.search-center-marker {
+  cursor: move !important;
+  z-index: 1000 !important;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+}
+
+.leaflet-marker-icon.search-center-marker:hover {
+  transform: scale(1.15);
+  transition: transform 0.2s ease;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.4));
+}
+
+.leaflet-marker-icon.search-center-marker:active {
+  transform: scale(1.05);
+  transition: transform 0.1s ease;
+}
+
+/* Add a pulsing animation to make it more noticeable */
+@keyframes searchPulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* Temporarily disable animation - causing marker visibility issues */
+/* .leaflet-marker-icon.search-center-marker {
+  animation: searchPulse 2s ease-in-out infinite;
+}
+
+.leaflet-marker-icon.search-center-marker:hover {
+  animation: none;
+} */
 
 /* Responsive adjustments */
 @media (max-width: 768px) {
