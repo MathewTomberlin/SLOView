@@ -109,7 +109,7 @@ public class MapDataController {
             @RequestParam double lat,
             @RequestParam(required = false, defaultValue = "1000") double distance,
             @RequestParam(required = false, defaultValue = "mv_restaurants") String table,
-            @RequestParam(required = false, defaultValue = "20") Integer limit) {
+            @RequestParam(required = false) Integer limit) {
         List<Map<String, Object>> features = gisApiService.findNearbyFeatures(lon, lat, distance, table, limit);
         return ResponseEntity.ok(features);
     }

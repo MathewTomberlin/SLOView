@@ -259,8 +259,11 @@ public class GISApiService {
             // Wait a bit to avoid rate limiting
             Thread.sleep(1000);
             
-            int pageSize = limit != null ? Math.min(limit, 25) : 25; // Default page size for roads
-            String url = gisApiBaseUrl + "/api/v1/roads?page=1&limit=" + pageSize;
+            // Fetch all roads by default, or use provided limit
+            String url = gisApiBaseUrl + "/api/v1/roads";
+            if (limit != null) {
+                url += "?limit=" + limit;
+            }
             
             String response = webClient.get()
                     .uri(url)
@@ -286,8 +289,11 @@ public class GISApiService {
             // Wait a bit to avoid rate limiting
             Thread.sleep(1000);
             
-            int pageSize = limit != null ? Math.min(limit, 20) : 20; // Default page size for POIs
-            String url = gisApiBaseUrl + "/api/v1/pois?page=1&limit=" + pageSize;
+            // Fetch all POIs by default, or use provided limit
+            String url = gisApiBaseUrl + "/api/v1/pois";
+            if (limit != null) {
+                url += "?limit=" + limit;
+            }
             
             String response = webClient.get()
                     .uri(url)
@@ -497,7 +503,10 @@ public class GISApiService {
             
             String url = gisApiBaseUrl + "/api/v1/spatial/optimized/nearby" +
                     "?lon=" + lon + "&lat=" + lat + "&distance=" + distance + 
-                    "&table=" + table + "&limit=" + limit;
+                    "&table=" + table;
+            if (limit != null) {
+                url += "&limit=" + limit;
+            }
             
             String response = webClient.get()
                     .uri(url)
