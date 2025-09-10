@@ -468,15 +468,66 @@ public class GISApiService {
                 nearbyFeature.put("type", properties.path("type").asText());
                 nearbyFeature.put("distance", properties.path("distance").asDouble());
                 
-                // Extract coordinates
+                // Extract coordinates and handle different geometry types
                 JsonNode geometry = feature.path("geometry");
+                String geometryType = geometry.path("type").asText();
                 JsonNode coordinates = geometry.path("coordinates");
-                if (coordinates.isArray() && coordinates.size() >= 2) {
-                    nearbyFeature.put("longitude", coordinates.get(0).asDouble());
-                    nearbyFeature.put("latitude", coordinates.get(1).asDouble());
-                }
                 
-                nearbyFeature.put("geometry", "Point");
+                if ("LineString".equals(geometryType)) {
+                    // Handle LineString geometry - extract coordinates as proper Java structure
+                    List<List<Double>> coordinateList = new ArrayList<>();
+                    if (coordinates.isArray()) {
+                        for (JsonNode coord : coordinates) {
+                            if (coord.isArray() && coord.size() >= 2) {
+                                coordinateList.add(List.of(
+                                    coord.get(0).asDouble(),
+                                    coord.get(1).asDouble()
+                                ));
+                            }
+                        }
+                    }
+                    nearbyFeature.put("coordinates", coordinateList);
+                    nearbyFeature.put("geometry", "LineString");
+                    
+                    // For compatibility, also set a representative point (first coordinate)
+                    if (!coordinateList.isEmpty()) {
+                        List<Double> firstCoord = coordinateList.get(0);
+                        nearbyFeature.put("longitude", firstCoord.get(0));
+                        nearbyFeature.put("latitude", firstCoord.get(1));
+                    }
+                } else if ("Polygon".equals(geometryType)) {
+                    // Handle Polygon geometry - preserve full coordinate array
+                    nearbyFeature.put("coordinates", coordinates);
+                    nearbyFeature.put("geometry", "Polygon");
+                    
+                    // For compatibility, calculate centroid as representative point
+                    if (coordinates.isArray() && coordinates.size() > 0) {
+                        JsonNode exteriorRing = coordinates.get(0);
+                        if (exteriorRing.isArray() && exteriorRing.size() > 0) {
+                            // Calculate centroid of first ring (exterior ring)
+                            double sumLon = 0, sumLat = 0;
+                            int pointCount = 0;
+                            for (JsonNode coord : exteriorRing) {
+                                if (coord.isArray() && coord.size() >= 2) {
+                                    sumLon += coord.get(0).asDouble();
+                                    sumLat += coord.get(1).asDouble();
+                                    pointCount++;
+                                }
+                            }
+                            if (pointCount > 0) {
+                                nearbyFeature.put("longitude", sumLon / pointCount);
+                                nearbyFeature.put("latitude", sumLat / pointCount);
+                            }
+                        }
+                    }
+                } else {
+                    // Handle Point geometry (default behavior)
+                    if (coordinates.isArray() && coordinates.size() >= 2) {
+                        nearbyFeature.put("longitude", coordinates.get(0).asDouble());
+                        nearbyFeature.put("latitude", coordinates.get(1).asDouble());
+                    }
+                    nearbyFeature.put("geometry", "Point");
+                }
                 nearbyFeatures.add(nearbyFeature);
             }
             

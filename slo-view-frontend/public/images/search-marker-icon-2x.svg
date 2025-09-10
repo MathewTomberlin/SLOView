@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 50 82" width="50" height="82">
+  <defs>
+    <linearGradient id="searchGradient2x" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#ff6b35;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#d63031;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Marker body -->
+  <path d="M25 0C11.2 0 0 11.2 0 25c0 25 25 57 25 57s25-32 25-57C50 11.2 38.8 0 25 0z" fill="url(#searchGradient2x)"/>
+  
+  <!-- Marker border -->
+  <path d="M25 0C11.2 0 0 11.2 0 25c0 25 25 57 25 57s25-32 25-57C50 11.2 38.8 0 25 0z" fill="none" stroke="#ffffff" stroke-width="4"/>
+  
+  <!-- Search icon background -->
+  <circle cx="25" cy="25" r="16" fill="#ffffff" opacity="0.9"/>
+  
+  <!-- Search icon -->
+  <circle cx="25" cy="25" r="10" fill="none" stroke="#ff6b35" stroke-width="4"/>
+  <path d="M31 31l5 5" stroke="#ff6b35" stroke-width="4" stroke-linecap="round"/>
+</svg>

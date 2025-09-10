@@ -110,6 +110,7 @@ public class MapDataController {
         return ResponseEntity.ok(pois);
     }
     
+    
     /**
      * Get spatial summary statistics from the GIS API.
      */
