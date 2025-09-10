@@ -241,9 +241,6 @@ const MapViewer: React.FC = () => {
       map.on('zoomend', () => {
         // fetchMapFeatures(map.getBounds()); // Disabled for now
       });
-
-      // Initial load of restaurants (default layer)
-      fetchLayerData('restaurants', centerPosition[0], centerPosition[1]);
     }
 
     // Cleanup function
@@ -254,7 +251,15 @@ const MapViewer: React.FC = () => {
       }
       centerMarkerRef.current = null;
     };
-  }, [centerPosition, fetchLayerData]);
+  }, []); // Empty dependency array - only run once for map initialization
+
+  // Separate effect for initial data loading
+  useEffect(() => {
+    if (mapInstanceRef.current) {
+      // Initial load of restaurants (default layer)
+      fetchLayerData('restaurants', centerPosition[0], centerPosition[1]);
+    }
+  }, [fetchLayerData]); // Only depend on fetchLayerData, not centerPosition
 
   // Effect to render features on the map
   useEffect(() => {
