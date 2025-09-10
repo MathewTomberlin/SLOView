@@ -254,7 +254,7 @@ const MapViewer: React.FC = () => {
       }
       centerMarkerRef.current = null;
     };
-  }, []);
+  }, [centerPosition, fetchLayerData]);
 
   // Effect to render features on the map
   useEffect(() => {
@@ -434,7 +434,7 @@ const MapViewer: React.FC = () => {
       });
       poiMarkersRef.current = newPOIMarkers;
     }
-  }, [selectedLayer, restaurants, streets, pois]);
+  }, [selectedLayer, restaurants, streets, pois, centerPosition, searchRadius]);
 
   // Cleanup effect for markers
   useEffect(() => {
