@@ -1,31 +1,10 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import { useChat } from '../../contexts/ChatContext';
+import { MapContext } from '../../utils/contextFormatter';
+import { MapFeature, OSMPoint } from '../../types/map';
 import './MapViewer.css';
-
-interface MapFeature {
-  id: number;
-  featureType: string;
-  name: string;
-  geometry: any;
-  properties: any;
-}
-
-interface OSMPoint {
-  osmId: number;
-  name: string;
-  amenity: string;
-  tourism: string;
-  shop: string;
-  highway: string;
-  natural: string;
-  leisure: string;
-  longitude: number;
-  latitude: number;
-  geometry?: string;
-  coordinates?: number[][];
-  type?: string;
-}
 
 
 /**
@@ -38,6 +17,7 @@ interface OSMPoint {
  * - Offline viewing of previously loaded areas
  */
 const MapViewer: React.FC = () => {
+  const { setMapContext } = useChat();
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
   const [features] = useState<MapFeature[]>([]);
@@ -60,11 +40,23 @@ const MapViewer: React.FC = () => {
   // Handler for radius changes
   const handleRadiusChange = (newRadius: number) => {
     setSearchRadius(newRadius);
-    // Re-query current layer if one is selected
-    if (selectedLayer !== 'none') {
-      fetchLayerData(selectedLayer, centerPosition[0], centerPosition[1], newRadius);
-    }
+    // The useEffect will handle the API call when searchRadius changes
   };
+
+  // Update map context for chat
+  const updateMapContext = useCallback(() => {
+    const context: MapContext = {
+      selectedLayer,
+      centerPosition,
+      searchRadius,
+      data: {
+        restaurants: selectedLayer === 'restaurants' ? restaurants : undefined,
+        streets: selectedLayer === 'streets' ? streets : undefined,
+        pois: selectedLayer === 'pois' ? pois : undefined,
+      }
+    };
+    setMapContext(context);
+  }, [selectedLayer, centerPosition, searchRadius, restaurants, streets, pois, setMapContext]);
 
   // const fetchMapFeatures = async (bounds: L.LatLngBounds) => {
   //   try {
@@ -91,7 +83,7 @@ const MapViewer: React.FC = () => {
 
   const fetchLayerData = useCallback(async (layerType: string, lat?: number, lon?: number, radius?: number) => {
     try {
-      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:8080';
+      const apiUrl = process.env.REACT_APP_API_URL || 'https://slo-view-backend-220847261978.us-west1.run.app';
       // Use the provided coordinates or fall back to current center position
       const centerLat = lat ?? centerPosition[0];
       const centerLon = lon ?? centerPosition[1];
@@ -119,15 +111,51 @@ const MapViewer: React.FC = () => {
       
       if (response.ok) {
         const data = await response.json();
+        
+        // Transform the data to OSMPoint format
+        const transformedData = data.map((item: any) => ({
+          osmId: item.osmId || item.osm_id || 0,
+          name: item.name || '',
+          longitude: item.longitude || 0,
+          latitude: item.latitude || 0,
+          geometry: item.geometry || 'Point',
+          coordinates: item.coordinates || [],
+          type: item.type || '',
+          distance: item.distance || 0,
+          amenity: item.amenity || '',
+          tourism: item.tourism || '',
+          shop: item.shop || '',
+          highway: item.highway || '',
+          natural: item.natural || '',
+          leisure: item.leisure || '',
+          cuisine: item.cuisine || '',
+          brand: item.brand || '',
+          phone: item.phone || '',
+          website: item.website || '',
+          opening_hours: item.opening_hours || '',
+          'addr:housenumber': item['addr:housenumber'] || '',
+          'addr:street': item['addr:street'] || '',
+          'addr:city': item['addr:city'] || '',
+          'addr:postcode': item['addr:postcode'] || '',
+          'addr:country': item['addr:country'] || '',
+          'addr:state': item['addr:state'] || '',
+          wheelchair: item.wheelchair || '',
+          outdoor_seating: item.outdoor_seating || '',
+          smoking: item.smoking || '',
+          wifi: item.wifi || '',
+          parking: item.parking || '',
+          ...item // Include any other fields
+        }));
+        
         switch (layerType) {
           case 'restaurants':
-            setRestaurants(data);
+            setRestaurants(transformedData);
             break;
           case 'streets':
-            setStreets(data);
+            setStreets(transformedData);
             break;
           case 'pois':
-            setPOIs(data);
+            setPOIs(transformedData);
             break;
         }
       } else {
@@ -261,11 +289,16 @@ const MapViewer: React.FC = () => {
 
   // Separate effect for initial data loading
   useEffect(() => {
-    if (mapInstanceRef.current) {
-      // Initial load of restaurants (default layer)
-      fetchLayerData('restaurants', centerPosition[0], centerPosition[1]);
+    if (mapInstanceRef.current && selectedLayer !== 'none') {
+      // Only fetch data if a layer is selected
+      fetchLayerData(selectedLayer, centerPosition[0], centerPosition[1], searchRadius);
     }
-  }, [fetchLayerData, centerPosition]); // Include both dependencies
+  }, [fetchLayerData, centerPosition, selectedLayer, searchRadius]); // Include all dependencies
+
+  // Update map context whenever data changes
+  useEffect(() => {
+    updateMapContext();
+  }, [updateMapContext]);
 
   // Effect to render features on the map
   useEffect(() => {
@@ -496,10 +529,7 @@ const MapViewer: React.FC = () => {
                 name="layer"
                 value="restaurants"
                 checked={selectedLayer === 'restaurants'}
-                onChange={(e) => {
-                  setSelectedLayer(e.target.value);
-                  fetchLayerData(e.target.value, centerPosition[0], centerPosition[1]);
-                }}
+                onChange={(e) => setSelectedLayer(e.target.value)}
               />
               <span className="radio-mark"></span>
               Restaurants ({restaurants.length})
@@ -510,10 +540,7 @@ const MapViewer: React.FC = () => {
                 name="layer"
                 value="streets"
                 checked={selectedLayer === 'streets'}
-                onChange={(e) => {
-                  setSelectedLayer(e.target.value);
-                  fetchLayerData(e.target.value, centerPosition[0], centerPosition[1]);
-                }}
+                onChange={(e) => setSelectedLayer(e.target.value)}
               />
               <span className="radio-mark"></span>
               Streets ({streets.length})
@@ -524,10 +551,7 @@ const MapViewer: React.FC = () => {
                 name="layer"
                 value="pois"
                 checked={selectedLayer === 'pois'}
-                onChange={(e) => {
-                  setSelectedLayer(e.target.value);
-                  fetchLayerData(e.target.value, centerPosition[0], centerPosition[1]);
-                }}
+                onChange={(e) => setSelectedLayer(e.target.value)}
               />
               <span className="radio-mark"></span>
               Points of Interest ({pois.length})
