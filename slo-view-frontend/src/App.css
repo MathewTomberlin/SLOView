@@ -10,6 +10,7 @@
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  position: relative;
 }
 
 /* Reset default margins and padding */
@@ -27,4 +28,23 @@ body {
 #root {
   height: 100vh;
   width: 100vw;
+}
+
+/* Adjust map container to account for chat sidebar */
+.map-viewer {
+  width: calc(100% - 350px); /* Subtract sidebar width */
+  height: calc(100vh - 60px); /* Subtract navbar height */
+  position: relative;
+}
+
+@media (max-width: 768px) {
+  .map-viewer {
+    width: calc(100% - 300px);
+  }
+}
+
+@media (max-width: 480px) {
+  .map-viewer {
+    width: 100%;
+  }
 }

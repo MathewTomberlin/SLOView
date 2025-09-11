@@ -301,6 +301,7 @@ public class GISApiService {
                     .bodyToMono(String.class)
                     .block();
             
+            
             return transformNearbyFeaturesResponse(response);
         } catch (Exception e) {
             System.err.println("Warning: Failed to fetch nearby features from GIS API: " + e.getMessage());
@@ -462,11 +463,31 @@ public class GISApiService {
                     nearbyFeature.put("osmId", 0L);
                 }
                 
-                // Extract properties
+                // Extract properties - now includes ALL OSM fields from VM response
                 JsonNode properties = feature.path("properties");
-                nearbyFeature.put("name", properties.path("name").asText());
-                nearbyFeature.put("type", properties.path("type").asText());
-                nearbyFeature.put("distance", properties.path("distance").asDouble());
+                
+                // Process all properties and include them (frontend will filter based on config)
+                properties.fields().forEachRemaining(entry -> {
+                    String fieldName = entry.getKey();
+                    JsonNode fieldValue = entry.getValue();
+                    
+                    // Convert field value based on type, handling nulls and empty strings
+                    Object value = convertJsonNodeToObject(fieldValue);
+                    if (value != null) {
+                        nearbyFeature.put(fieldName, value);
+                    }
+                });
+                
+                // Ensure core fields are always present with defaults
+                if (!nearbyFeature.containsKey("name")) {
+                    nearbyFeature.put("name", properties.path("name").asText(""));
+                }
+                if (!nearbyFeature.containsKey("type")) {
+                    nearbyFeature.put("type", properties.path("type").asText(""));
+                }
+                if (!nearbyFeature.containsKey("distance")) {
+                    nearbyFeature.put("distance", properties.path("distance").asDouble(0.0));
+                }
                 
                 // Extract coordinates and handle different geometry types
                 JsonNode geometry = feature.path("geometry");
@@ -567,6 +588,51 @@ public class GISApiService {
         } catch (Exception e) {
             throw new RuntimeException("Failed to transform data metadata response", e);
         }
+    }
+    
+    /**
+     * Converts a JsonNode to an appropriate Java object.
+     * Handles null values and empty strings properly.
+     * 
+     * @param node JsonNode to convert
+     * @return Converted object or null if empty/invalid
+     */
+    private Object convertJsonNodeToObject(JsonNode node) {
+        if (node.isNull() || node.isMissingNode()) {
+            return null;
+        }
+        
+        if (node.isTextual()) {
+            String text = node.asText();
+            // Don't filter out empty strings - they might be valid values
+            return text;
+        }
+        
+        if (node.isNumber()) {
+            if (node.isInt()) {
+                return node.asInt();
+            } else if (node.isLong()) {
+                return node.asLong();
+            } else if (node.isDouble()) {
+                return node.asDouble();
+            }
+        }
+        
+        if (node.isBoolean()) {
+            return node.asBoolean();
+        }
+        
+        if (node.isArray()) {
+            return node;
+        }
+        
+        if (node.isObject()) {
+            return node;
+        }
+        
+        // Fallback to string representation
+        String text = node.asText();
+        return text;
     }
     
     /**
