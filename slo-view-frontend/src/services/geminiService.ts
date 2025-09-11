@@ -3,12 +3,14 @@ import { GeminiResponse } from '../types/chat';
 import { MapContext, formatMapContextForPrompt } from '../utils/contextFormatter';
 
 class GeminiService {
-  private genAI: GoogleGenerativeAI;
-  private model: any;
+  private genAI: GoogleGenerativeAI | null = null;
+  private model: any = null;
+  private initialized = false;
 
-  constructor() {
+  private initialize() {
+    if (this.initialized) return;
+    
     const apiKey = process.env.REACT_APP_GEMINI_API_KEY;
-    console.log('API Key loaded:', apiKey ? `${apiKey.substring(0, 10)}...` : 'NOT FOUND');
     
     if (!apiKey) {
       throw new Error('REACT_APP_GEMINI_API_KEY is not defined');
@@ -16,10 +18,14 @@ class GeminiService {
     
     this.genAI = new GoogleGenerativeAI(apiKey);
     this.model = this.genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    this.initialized = true;
   }
 
   async sendMessage(message: string, mapContext?: MapContext | null): Promise<GeminiResponse> {
     try {
+      // Initialize the service only when needed
+      this.initialize();
+      
       // Create the enhanced prompt with map context
       let enhancedPrompt = message;
       
@@ -29,10 +35,8 @@ class GeminiService {
       } else {
         enhancedPrompt = `You are a helpful assistant for a map application showing San Luis Obispo County, California. The user is asking about the map. Please provide a helpful response.\n\nUser Question: ${message}`;
       }
-
-      console.log('Enhanced prompt:', enhancedPrompt);
       
-      const result = await this.model.generateContent(enhancedPrompt);
+      const result = await this.model!.generateContent(enhancedPrompt);
       const response = await result.response;
       const text = response.text();
       

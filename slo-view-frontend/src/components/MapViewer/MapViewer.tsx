@@ -83,7 +83,7 @@ const MapViewer: React.FC = () => {
 
   const fetchLayerData = useCallback(async (layerType: string, lat?: number, lon?: number, radius?: number) => {
     try {
-      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:8080';
+      const apiUrl = process.env.REACT_APP_API_URL || 'https://slo-view-backend-220847261978.us-west1.run.app';
       // Use the provided coordinates or fall back to current center position
       const centerLat = lat ?? centerPosition[0];
       const centerLon = lon ?? centerPosition[1];
